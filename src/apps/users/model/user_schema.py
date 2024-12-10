@@ -11,12 +11,13 @@ class UserCreate(BaseSchema):
     last_name: str
     email: str
     password: str
+    phone_number: str
     role: RoleEnum
 
 class UserResponse(BaseSchema):
     id: int
     first_name: str
     last_name: str
-    password: str
     email: str
+    phone_number: str
     role: RoleEnum

@@ -10,8 +10,8 @@ engine = create_async_engine(
     future=True,
     echo=False,
     json_serializer=jsonable_encoder,
-    pool_size=10,  # Taille du pool de connexions
-    max_overflow=20,  # Nombre maximal de connexions supplémentaires qui peuvent être ouvertes au-delà de pool_size
+    pool_size=10,
+    max_overflow=20,
 )
 
 AsyncSessionFactory = sessionmaker(

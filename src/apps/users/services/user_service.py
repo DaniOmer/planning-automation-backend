@@ -5,15 +5,24 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from loguru import logger
 
-from src.apps.users import User
+from src.apps.users import User, UserCreate
+from src.helpers import SecurityHelper
 
 class UserService:
     """Service for operations related to users"""
 
     @staticmethod
-    async def create_user(user_data: User, session: AsyncSession):
+    async def create_user(user_data: UserCreate, session: AsyncSession):
         try:
-            user = User(**user_data)
+            hashed_password = SecurityHelper.get_password_hash(user_data.password)
+            user = User(
+                email=user_data.email, 
+                password=hashed_password,
+                first_name=user_data.first_name,
+                last_name=user_data.last_name,
+                role=user_data.role,
+                phone_number=user_data.phone_number,
+            )
             session.add(user)
             await session.commit()
 

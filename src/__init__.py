@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from src.apps.users import UserRouter
 
 app = FastAPI(
-    title="My API with documentation",
+    title="Planify API with documentation",
     description="This is Planify API.",
     version="1.0.0",
     contact={

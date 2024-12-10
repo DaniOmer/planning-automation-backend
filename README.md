@@ -9,20 +9,17 @@ planify-backend/
 ├── src/                     # Main source code
 │   ├── apps/                # Application-specific modules
 │   │   ├── users/           # Users module
-│   │   │   ├── api/         # Routes and controllers
-│   │   │   │   ├── routes.py
-│   │   │   │   └── user_controller.py
+│   │   │   ├── routes/      # Routes
+│   │   │   │   └── user_route.py
 │   │   │   ├── domain/      # Business logic for users
 │   │   │   │   └── user_service.ts
-│   │   │   ├── data-access/ # Data access (models, repositories)
+│   │   │   ├── data-access/ # Data access (models, pydantic schema)
 │   │   │       ├── user_model.py
-│   │   │       └── user_repository.py
+│   │   │       └── user_schema.py
 │   ├── config/              # Configuration files
-│   │   ├── db.ts            # MongoDB connection configuration
-│   │   └── config.ts        # Other global settings
+│   │   ├── database_service.py            # Postgres database connection configuration
+│   │   └── config.py        # Other global settings
 │   ├── shared/           # Reusable cross-component libraries
-│   │   ├── logger/          # Log management
-│   │   │   └── logger.py
 │   │   ├── authenticator/   # Authentication and JWT management
 │   │       └── auth_middleware.py
 ├── main.py                  # Project entrypoint
