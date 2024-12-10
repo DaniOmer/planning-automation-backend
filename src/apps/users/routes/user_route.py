@@ -8,7 +8,7 @@ from src.helpers import TransformHelper
 
 router = APIRouter(prefix="/users")
 
-@router.post("/users/", response_class=JSONResponse)
+@router.post("/register", response_class=JSONResponse)
 async def create_user(
     user_data: UserCreate, 
     session: AsyncSession = Depends(get_db)
