@@ -3,8 +3,7 @@ from enum import Enum
 
 class RoleEnum(str, Enum):
     admin = "admin"
-    user = "user"
-    guest = "guest"
+    user = "teacher"
 
 class UserCreate(BaseSchema):
     first_name: str
