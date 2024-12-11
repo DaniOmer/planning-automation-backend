@@ -10,4 +10,10 @@ from src.apps.schedules.model.years_groups.years_groups_schema import *
 from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import *
 from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_schema import *
 from src.apps.schedules.model.availabilities.availabilities_model import *
+from src.apps.schedules.model.availabilities.availabilities_schema import *
+from src.apps.schedules.routes.availabilities.availabilities_route import router as AvailabilitiesRouter
 from src.apps.schedules.model.subjects.subjects_model import *
+from src.apps.schedules.model.subjects.subjects_schema import *
+from src.apps.schedules.routes.subjects.subjects_route import router as SubjectsRouter
+
+
