@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, Date
-from src.config.database_service import Base
+from sqlalchemy import Column, Integer, String, Date, Float
+from src.models import Base
 
 class Subjects(Base):
     __tablename__ = 'subjects'
@@ -7,6 +7,6 @@ class Subjects(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(45), nullable=False)
     hourly_volume = Column(Integer)
-    session_duration = Column(float)
+    session_duration = Column(Float)
     start_at = Column(Date)
     end_at = Column(Date)
