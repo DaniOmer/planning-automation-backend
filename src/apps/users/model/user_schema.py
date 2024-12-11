@@ -14,6 +14,10 @@ class UserCreate(BaseSchema):
     phone_number: str
     role: RoleEnum
 
+class UserLogin(BaseSchema):
+    email: str
+    password: str
+
 class UserResponse(BaseSchema):
     id: int
     first_name: str
@@ -21,3 +25,7 @@ class UserResponse(BaseSchema):
     email: str
     phone_number: str
     role: RoleEnum
+
+class LoginResponse(BaseSchema):
+    user: UserResponse
+    access_token: str

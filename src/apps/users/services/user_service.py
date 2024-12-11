@@ -1,11 +1,11 @@
 from src.apps.users import User
-from sqlalchemy import insert
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from loguru import logger
 
-from src.apps.users import User, UserCreate
+from src.apps.users import User, UserCreate, UserLogin
 from src.helpers import SecurityHelper
 
 class UserService:
@@ -32,4 +32,19 @@ class UserService:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        
+    @staticmethod
+    async def authenticate_user(user_data: UserLogin, session: AsyncSession):
+        query = select(User).where(User.email == user_data.email)
+        result = await session.execute(query)
+        user = result.scalar_one_or_none()
+        if user and SecurityHelper.verify_password(user_data.password, user.password):
+            logger.info(f"User authenticated successfully with email: {user.email}")
+            token = SecurityHelper.create_access_token({
+                "email": user.email, 
+                "role": user.role
+            })
+            return [user, token]
+        else:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
         
