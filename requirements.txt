@@ -9,3 +9,4 @@ greenlet
 bcrypt==4.0.1
 passlib[bcrypt]
 pyjwt
+sib-api-v3-sdk
