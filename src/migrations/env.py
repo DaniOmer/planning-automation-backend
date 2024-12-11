@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from src.apps.users import User
-
+from src.apps.classrooms import Classroom
 from src.apps.schedules import Classes
 from src.apps.schedules import DayType
 from src.apps.schedules import EducationalCourses
