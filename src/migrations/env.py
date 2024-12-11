@@ -5,8 +5,16 @@ from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from src.apps.users import User
+
+from src.apps.schedules import Classes
+from src.apps.schedules import DayType
+from src.apps.schedules import EducationalCourses
+from src.apps.schedules import YearsGroups
+from src.apps.schedules import YearsGroupsEducationalCourses
+
 from src.apps.schedules import Availabilities
 from src.apps.schedules import Subjects
+
 from alembic import context
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
