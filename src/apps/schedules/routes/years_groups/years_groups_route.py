@@ -32,13 +32,10 @@ async def get_years_groups(session: AsyncSession = Depends(get_db)):
 
 @router.get("/{group_id}", response_model=YearsGroupResponse)
 async def get_years_group(group_id: int, session: AsyncSession = Depends(get_db)):
-    try:
-        group_obj = await YearsGroupService.get_years_group_by_id(group_id, session)
-        if not group_obj:
-            raise HTTPException(status_code=404, detail="YearsGroup not found")
-        return YearsGroupResponse(**TransformHelper.map_to_dict(group_obj))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    group_obj = await YearsGroupService.get_years_group_by_id(group_id, session)
+    if not group_obj:
+        raise HTTPException(status_code=404, detail="YearsGroup not found")
+    return YearsGroupResponse(**TransformHelper.map_to_dict(group_obj))
 
 @router.put("/{group_id}", response_model=YearsGroupResponse)
 async def update_years_group(
@@ -46,20 +43,14 @@ async def update_years_group(
     group_data: YearsGroupCreate, 
     session: AsyncSession = Depends(get_db)
 ):
-    try:
-        updated_group = await YearsGroupService.update_years_group(group_id, group_data, session)
-        if not updated_group:
-            raise HTTPException(status_code=404, detail="YearsGroup not found")
-        return YearsGroupResponse(**TransformHelper.map_to_dict(updated_group))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    updated_group = await YearsGroupService.update_years_group(group_id, group_data, session)
+    if not updated_group:
+        raise HTTPException(status_code=404, detail="YearsGroup not found")
+    return YearsGroupResponse(**TransformHelper.map_to_dict(updated_group))
 
 @router.delete("/{group_id}", response_model=dict)
 async def delete_years_group(group_id: int, session: AsyncSession = Depends(get_db)):
-    try:
-        success = await YearsGroupService.delete_years_group(group_id, session)
-        if not success:
-            raise HTTPException(status_code=404, detail="YearsGroup not found")
-        return {"detail": "YearsGroup successfully deleted"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    success = await YearsGroupService.delete_years_group(group_id, session)
+    if not success:
+        raise HTTPException(status_code=404, detail="YearsGroup not found")
+    return {"detail": "YearsGroup successfully deleted"}

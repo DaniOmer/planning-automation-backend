@@ -32,13 +32,10 @@ async def get_educational_courses(session: AsyncSession = Depends(get_db)):
 
 @router.get("/{course_id}", response_model=EducationalCourseResponse)
 async def get_educational_course(course_id: int, session: AsyncSession = Depends(get_db)):
-    try:
-        course_obj = await EducationalCourseService.get_educational_course_by_id(course_id, session)
-        if not course_obj:
-            raise HTTPException(status_code=404, detail="EducationalCourse not found")
-        return EducationalCourseResponse(**TransformHelper.map_to_dict(course_obj))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    course_obj = await EducationalCourseService.get_educational_course_by_id(course_id, session)
+    if not course_obj:
+        raise HTTPException(status_code=404, detail="EducationalCourse not found")
+    return EducationalCourseResponse(**TransformHelper.map_to_dict(course_obj))
 
 @router.put("/{course_id}", response_model=EducationalCourseResponse)
 async def update_educational_course(
@@ -46,20 +43,14 @@ async def update_educational_course(
     course_data: EducationalCourseCreate, 
     session: AsyncSession = Depends(get_db)
 ):
-    try:
-        updated_course = await EducationalCourseService.update_educational_course(course_id, course_data, session)
-        if not updated_course:
-            raise HTTPException(status_code=404, detail="EducationalCourse not found")
-        return EducationalCourseResponse(**TransformHelper.map_to_dict(updated_course))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    updated_course = await EducationalCourseService.update_educational_course(course_id, course_data, session)
+    if not updated_course:
+        raise HTTPException(status_code=404, detail="EducationalCourse not found")
+    return EducationalCourseResponse(**TransformHelper.map_to_dict(updated_course))
 
 @router.delete("/{course_id}", response_model=dict)
 async def delete_educational_course(course_id: int, session: AsyncSession = Depends(get_db)):
-    try:
-        success = await EducationalCourseService.delete_educational_course(course_id, session)
-        if not success:
-            raise HTTPException(status_code=404, detail="EducationalCourse not found")
-        return {"detail": "EducationalCourse successfully deleted"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    success = await EducationalCourseService.delete_educational_course(course_id, session)
+    if not success:
+        raise HTTPException(status_code=404, detail="EducationalCourse not found")
+    return {"detail": "EducationalCourse successfully deleted"}

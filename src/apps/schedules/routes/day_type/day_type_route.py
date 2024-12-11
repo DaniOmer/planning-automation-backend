@@ -32,13 +32,10 @@ async def get_day_types(session: AsyncSession = Depends(get_db)):
 
 @router.get("/{day_type_id}", response_model=DayTypeResponse)
 async def get_day_type(day_type_id: int, session: AsyncSession = Depends(get_db)):
-    try:
-        day_type_obj = await DayTypeService.get_day_type_by_id(day_type_id, session)
-        if not day_type_obj:
-            raise HTTPException(status_code=404, detail="DayType not found")
-        return DayTypeResponse(**TransformHelper.map_to_dict(day_type_obj))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    day_type_obj = await DayTypeService.get_day_type_by_id(day_type_id, session)
+    if not day_type_obj:
+        raise HTTPException(status_code=404, detail="DayType not found")
+    return DayTypeResponse(**TransformHelper.map_to_dict(day_type_obj))
 
 @router.put("/{day_type_id}", response_model=DayTypeResponse)
 async def update_day_type(
@@ -46,20 +43,14 @@ async def update_day_type(
     day_type_data: DayTypeCreate, 
     session: AsyncSession = Depends(get_db)
 ):
-    try:
-        updated_day_type = await DayTypeService.update_day_type(day_type_id, day_type_data, session)
-        if not updated_day_type:
-            raise HTTPException(status_code=404, detail="DayType not found")
-        return DayTypeResponse(**TransformHelper.map_to_dict(updated_day_type))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    updated_day_type = await DayTypeService.update_day_type(day_type_id, day_type_data, session)
+    if not updated_day_type:
+        raise HTTPException(status_code=404, detail="DayType not found")
+    return DayTypeResponse(**TransformHelper.map_to_dict(updated_day_type))
 
 @router.delete("/{day_type_id}", response_model=dict)
 async def delete_day_type(day_type_id: int, session: AsyncSession = Depends(get_db)):
-    try:
-        success = await DayTypeService.delete_day_type(day_type_id, session)
-        if not success:
-            raise HTTPException(status_code=404, detail="DayType not found")
-        return {"detail": "DayType successfully deleted"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    success = await DayTypeService.delete_day_type(day_type_id, session)
+    if not success:
+        raise HTTPException(status_code=404, detail="DayType not found")
+    return {"detail": "DayType successfully deleted"}

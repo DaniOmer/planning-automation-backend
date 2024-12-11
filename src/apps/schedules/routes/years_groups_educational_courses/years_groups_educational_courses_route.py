@@ -46,15 +46,12 @@ async def get_years_groups_educational_course(
     educational_courses_id: int,
     session: AsyncSession = Depends(get_db),
 ):
-    try:
-        entry = await YearsGroupsEducationalCoursesService.get_entry_by_ids(
-            years_group_id, educational_courses_id, session
-        )
-        if not entry:
-            raise HTTPException(status_code=404, detail="Entry not found")
-        return JSONResponse(content=TransformHelper.map_to_dict(entry))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    entry = await YearsGroupsEducationalCoursesService.get_entry_by_ids(
+        years_group_id, educational_courses_id, session
+    )
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return JSONResponse(content=TransformHelper.map_to_dict(entry))
 
 
 @router.put("/{years_group_id}/{educational_courses_id}", response_class=JSONResponse)
@@ -64,15 +61,12 @@ async def update_years_groups_educational_course(
     data: YearsGroupsEducationalCoursesSchema,
     session: AsyncSession = Depends(get_db),
 ):
-    try:
-        entry = await YearsGroupsEducationalCoursesService.update_entry(
-            years_group_id, educational_courses_id, data, session
-        )
-        if not entry:
-            raise HTTPException(status_code=404, detail="Entry not found")
-        return JSONResponse(content=TransformHelper.map_to_dict(entry))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    entry = await YearsGroupsEducationalCoursesService.update_entry(
+        years_group_id, educational_courses_id, data, session
+    )
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return JSONResponse(content=TransformHelper.map_to_dict(entry))
 
 
 @router.delete("/{years_group_id}/{educational_courses_id}", response_class=JSONResponse)
@@ -81,12 +75,9 @@ async def delete_years_groups_educational_course(
     educational_courses_id: int,
     session: AsyncSession = Depends(get_db),
 ):
-    try:
-        success = await YearsGroupsEducationalCoursesService.delete_entry(
-            years_group_id, educational_courses_id, session
-        )
-        if not success:
-            raise HTTPException(status_code=404, detail="Entry not found")
-        return JSONResponse(content={"detail": "Entry successfully deleted"})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    success = await YearsGroupsEducationalCoursesService.delete_entry(
+        years_group_id, educational_courses_id, session
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return JSONResponse(content={"detail": "Entry successfully deleted"})
