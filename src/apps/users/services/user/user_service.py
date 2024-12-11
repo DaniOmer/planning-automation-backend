@@ -41,6 +41,7 @@ class UserService:
         if user and SecurityHelper.verify_password(user_data.password, user.password):
             logger.info(f"User authenticated successfully with email: {user.email}")
             token = SecurityHelper.create_access_token({
+                "sub": str(user.id),
                 "email": user.email, 
                 "role": user.role
             })

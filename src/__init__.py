@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
+from src.apps.users import UserRouter, InvitationRouter
 from src.apps.classrooms import ClassroomRouter
-from src.apps.users import UserRouter
 
 app = FastAPI(
     title="Planify API with documentation",
@@ -20,4 +20,5 @@ app = FastAPI(
 
 # Routers
 app.include_router(UserRouter)
+app.include_router(InvitationRouter)
 app.include_router(ClassroomRouter)

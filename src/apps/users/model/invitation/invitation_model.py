@@ -7,6 +7,8 @@ class Invitation(Base):
     __tablename__ = 'invitation'
 
     id = Column(Integer, primary_key=True)
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False, unique=True)
     invited_by = Column(Integer, ForeignKey('user.id'), nullable=False)
     token = Column(String(255), nullable=False, unique=True)

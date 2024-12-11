@@ -13,19 +13,22 @@ class InvitationService:
     """Service for operations related to user invitations."""
 
     @staticmethod
-    async def create_invitation(data: InvitationCreateSchema, session: AsyncSession):
+    async def create_invitation(inviter, data: InvitationCreateSchema, session: AsyncSession):
         try:
             stmt = await session.execute(select(Invitation).where(Invitation.email == data.email))
             existing_invitation = stmt.scalar_one_or_none()
             if existing_invitation:
                 raise ValueError("An invitation already exists for the given email.")
 
-            token=SecurityHelper.generate_token()
+            invited_by = int(inviter['sub'])
+            token=SecurityHelper.generate_random_token()
             expires_at = datetime.now()
-            expires_at += timedelta(days=INVITATION_EXPIRATION_DAYS)
+            expires_at += timedelta(days=int(INVITATION_EXPIRATION_DAYS))
             invitation = Invitation(
+                first_name=data.first_name, 
+                last_name=data.last_name,
                 email=data.email, 
-                invited_by=data.invited_by, 
+                invited_by=invited_by, 
                 token=token,
                 is_disabled=False,
                 expires_at=expires_at
