@@ -7,5 +7,6 @@ class Subjects(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(45), nullable=False)
     hourly_volume = Column(Integer)
+    session_duration = Column(float)
     start_at = Column(Date)
     end_at = Column(Date)
