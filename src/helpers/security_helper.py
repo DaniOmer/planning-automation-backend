@@ -18,7 +18,7 @@ class SecurityHelper():
     @staticmethod
     def create_access_token(data: dict):
         to_encode = data.copy()
-        expires_delta= timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta= timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:

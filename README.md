@@ -38,7 +38,7 @@ python3 -m venv .venv
 ```
 
 ```bash
-.venv/bin/activate
+source .venv/bin/activate
 ```
 
 ### Install requirements
@@ -50,7 +50,7 @@ pip3 install -r requirements.txt
 ### Start the Postgres databases:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 To setup DB run :
