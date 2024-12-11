@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from src.apps.classrooms import ClassroomRouter
 from src.apps.users import UserRouter
 
 app = FastAPI(
@@ -19,3 +20,4 @@ app = FastAPI(
 
 # Routers
 app.include_router(UserRouter)
+app.include_router(ClassroomRouter)
