@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from src.apps.users import *
 from src.config.database_service import get_db
 from src.helpers import TransformHelper
+from src.helpers import SecurityHelper
 
 router = APIRouter(prefix="/users")
 
@@ -39,3 +40,7 @@ async def login(
     except Exception as e:
         logger.error(f"Unexpected error during login: {str(e)}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+@router.get("/admin-dashboard")
+async def admin_dashboard(current_user=Depends(SecurityHelper.require_role("admin"))):
+    return {"message": "Welcome to the admin dashboard", "user": current_user}
