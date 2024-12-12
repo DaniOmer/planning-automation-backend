@@ -7,7 +7,7 @@ from src.config.database_service import get_db
 from src.helpers import TransformHelper
 from src.apps.users import InvitationCreateSchema
 
-router = APIRouter(prefix="/users/invitation")
+router = APIRouter(prefix="/users/invitation", tags=["Users"])
 
 @router.post("/send", response_class=JSONResponse)
 async def send_registration_invitation(

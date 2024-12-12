@@ -10,7 +10,7 @@ from src.apps.schedules.services.subjects.subjects_service import (
 )
 from src.apps.schedules.model.subjects.subjects_schema import SubjectCreate, SubjectUpdate, SubjectResponse
 
-router = APIRouter(prefix="/subjects")
+router = APIRouter(prefix="/subjects", tags=["Subjects"])
 
 @router.get("/", response_model=list[SubjectResponse])
 async def read_subjects(db: AsyncSession = Depends(get_db)):

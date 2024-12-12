@@ -6,7 +6,7 @@ from src.apps.schedules.model.educational_courses.educational_courses_schema imp
 from src.apps.schedules.services.educational_courses.educational_courses_service import EducationalCourseService
 from src.helpers import TransformHelper
 
-router = APIRouter(prefix="/educational_courses")
+router = APIRouter(prefix="/educational_courses", tags=["EducationalCourses"])
 
 @router.post("/create", response_model=EducationalCourseResponse)
 async def create_educational_course(

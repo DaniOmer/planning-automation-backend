@@ -7,7 +7,7 @@ from src.config.database_service import get_db
 from src.helpers import TransformHelper
 from src.helpers import SecurityHelper
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/register", response_class=JSONResponse)
 async def register(

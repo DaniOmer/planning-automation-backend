@@ -8,7 +8,7 @@ from src.apps.schedules.model.classes.classes_schema import ClassCreate, ClassRe
 from src.apps.schedules.services.classes.classes_service import ClassService
 from src.helpers import TransformHelper
 
-router = APIRouter(prefix="/classes")
+router = APIRouter(prefix="/classes", tags=["Classes"])
 
 @router.post("/create", response_model=ClassResponse)
 async def create_class(
