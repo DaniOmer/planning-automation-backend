@@ -4,20 +4,21 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.apps.schedules import Classes, Subjects
-from src.apps.schedules.model.assignments_courses.assignment_course_model import \
-    AssignmentCourse
-from src.apps.schedules.model.assignments_courses.assignment_course_schema import \
-    AssignmentCourseCreate
 from src.apps.users.model.user.user_model import User
+from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import \
+    AssignmentSubject
+from src.apps.schedules.model.assignments_subjects.assignments_subjects_schema import \
+    AssignmentSubjectCreate
+from src.apps.schedules.model.classes.classes_model import Classes
+from src.apps.schedules.model.subjects.subjects_model import Subjects
 from src.helpers import ValidationHelper
 
 
-class AssignmentCourseService:
+class AssignmentsSubjectsService:
     """Service for operations related to assignments_courses"""
 
     @staticmethod
-    async def create_assignment_course(data: AssignmentCourseCreate, session: AsyncSession):
+    async def create_assignment_course(data: AssignmentSubjectCreate, session: AsyncSession):
         """Create a new assignment course"""
         try:
            
@@ -34,23 +35,23 @@ class AssignmentCourseService:
                 )
 
             await ValidationHelper.validate_id(Classes, data.classes_id, session, "Class")
-            await ValidationHelper.validate_id(Subjects, data.courses_id, session, "Subject")
+            await ValidationHelper.validate_id(Subjects, data.subjects_id, session, "Subject")
 
             assignment_data = data.model_dump()
-            logger.debug(f"Cleaned data for AssignmentCourse creation: {assignment_data}")
+            logger.debug(f"Cleaned data for AssignmentSubject creation: {assignment_data}")
 
-            assignment_course = AssignmentCourse(**assignment_data)
+            assignment_course = AssignmentSubject(**assignment_data)
             session.add(assignment_course)
             await session.commit()
             await session.refresh(assignment_course)
-            logger.info(f"AssignmentCourse created successfully with ID: {assignment_course.id}")
+            logger.info(f"AssignmentSubject created successfully with ID: {assignment_course.id}")
             return assignment_course
 
         except HTTPException as e:
             logger.error(f"HTTP Exception during creation: {e.detail}")
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error creating AssignmentCourse: {str(e)}")
+            logger.error(f"Unexpected error creating AssignmentSubject: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create assignment course"
@@ -60,11 +61,11 @@ class AssignmentCourseService:
     async def get_assignment_course_by_id(assignment_id: int, session: AsyncSession):
         """Fetch assignment course by ID with related entities"""
         try:
-            query = select(AssignmentCourse).options(
-                joinedload(AssignmentCourse.class_info),
-                joinedload(AssignmentCourse.course_info),
-                joinedload(AssignmentCourse.user_info)
-            ).where(AssignmentCourse.id == assignment_id)
+            query = select(AssignmentSubject).options(
+                joinedload(AssignmentSubject.class_info),
+                joinedload(AssignmentSubject.subject_info),
+                joinedload(AssignmentSubject.user_info)
+            ).where(AssignmentSubject.id == assignment_id)
 
             result = await session.execute(query)
             assignment_course = result.scalar_one_or_none()
@@ -72,14 +73,14 @@ class AssignmentCourseService:
             if not assignment_course:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"AssignmentCourse with ID {assignment_id} not found"
+                    detail=f"AssignmentSubject with ID {assignment_id} not found"
                 )
-            logger.info(f"Fetched AssignmentCourse with ID: {assignment_id}")
+            logger.info(f"Fetched AssignmentSubject with ID: {assignment_id}")
             return assignment_course
         except HTTPException as e:
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error fetching AssignmentCourse: {str(e)}")
+            logger.error(f"Unexpected error fetching AssignmentSubject: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch assignment course"
@@ -89,46 +90,46 @@ class AssignmentCourseService:
     async def list_assignment_courses(session: AsyncSession):
         """List all assignment courses with related entities"""
         try:
-            query = select(AssignmentCourse).options(
-                joinedload(AssignmentCourse.class_info),
-                joinedload(AssignmentCourse.course_info),
-                joinedload(AssignmentCourse.user_info)
+            query = select(AssignmentSubject).options(
+                joinedload(AssignmentSubject.class_info),
+                joinedload(AssignmentSubject.subject_info),
+                joinedload(AssignmentSubject.user_info)
             )
             result = await session.execute(query)
             assignments = result.scalars().all()
-            logger.info(f"Fetched {len(assignments)} AssignmentCourses")
+            logger.info(f"Fetched {len(assignments)} AssignmentSubjects")
             return assignments
         except Exception as e:
-            logger.error(f"Unexpected error listing AssignmentCourses: {str(e)}")
+            logger.error(f"Unexpected error listing AssignmentSubjects: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to list assignment courses"
             )
 
     @staticmethod
-    async def update_assignment_course(assignment_id: int, data: AssignmentCourseCreate, session: AsyncSession):
+    async def update_assignment_course(assignment_id: int, data: AssignmentSubjectCreate, session: AsyncSession):
         """Update an existing assignment course"""
         try:
-            assignment_course = await AssignmentCourseService.get_assignment_course_by_id(assignment_id, session)
+            assignment_course = await AssignmentsSubjectsService.get_assignment_course_by_id(assignment_id, session)
 
             await ValidationHelper.validate_id(User, data.users_id, session, "User")
             await ValidationHelper.validate_id(Classes, data.classes_id, session, "Class")
-            await ValidationHelper.validate_id(Subjects, data.courses_id, session, "Subject")
+            await ValidationHelper.validate_id(Subjects, data.subjects_id, session, "Subject")
 
             assignment_course.classes_id = data.classes_id
-            assignment_course.courses_id = data.courses_id
+            assignment_course.subjects_id = data.subjects_id
             assignment_course.users_id = data.users_id
             assignment_course.url_online = data.url_online
 
             await session.commit()
             await session.refresh(assignment_course)
-            logger.info(f"AssignmentCourse with ID {assignment_id} updated successfully")
+            logger.info(f"AssignmentSubject with ID {assignment_id} updated successfully")
             return assignment_course
         except HTTPException as e:
             logger.error(f"HTTP Exception during update: {e.detail}")
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error updating AssignmentCourse: {str(e)}")
+            logger.error(f"Unexpected error updating AssignmentSubject: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update assignment course"
@@ -138,15 +139,15 @@ class AssignmentCourseService:
     async def delete_assignment_course(assignment_id: int, session: AsyncSession):
         """Delete an assignment course by ID"""
         try:
-            assignment_course = await AssignmentCourseService.get_assignment_course_by_id(assignment_id, session)
+            assignment_course = await AssignmentsSubjectsService.get_assignment_course_by_id(assignment_id, session)
             await session.delete(assignment_course)
             await session.commit()
-            logger.info(f"AssignmentCourse with ID {assignment_id} deleted successfully")
+            logger.info(f"AssignmentSubject with ID {assignment_id} deleted successfully")
             return {"detail": "Assignment deleted successfully"}
         except HTTPException as e:
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error deleting AssignmentCourse: {str(e)}")
+            logger.error(f"Unexpected error deleting AssignmentSubject: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete assignment course"
