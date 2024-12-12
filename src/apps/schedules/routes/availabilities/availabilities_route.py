@@ -29,14 +29,20 @@ async def read_availability_by_users_id(users_id: int, db: AsyncSession = Depend
 
 @router.post("/", response_model=AvailabilityResponse)
 async def create_new_availability(availability: AvailabilityCreate, db: AsyncSession = Depends(get_db)):
-    return await create_availability(db, availability)
+    try:
+        return await create_availability(db, availability)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/{availability_id}", response_model=AvailabilityResponse)
 async def update_existing_availability(availability_id: int, availability: AvailabilityUpdate, db: AsyncSession = Depends(get_db)):
-    updated = await update_availability(db, availability_id, availability)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Availability not found")
-    return updated
+    try:
+        updated = await update_availability(db, availability_id, availability)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Availability not found")
+        return updated
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{availability_id}")
 async def delete_existing_availability(availability_id: int, db: AsyncSession = Depends(get_db)):
