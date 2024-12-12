@@ -11,11 +11,25 @@ router = APIRouter(prefix="/users")
 
 @router.post("/register", response_class=JSONResponse)
 async def register(
-    user_data: UserCreate, 
+    user_data: UserCreateSchema, 
     session: AsyncSession = Depends(get_db)
 ):
     try:
-        user = await UserService.create_user(user_data, session)
+        user_role = RoleEnum.admin
+        user = await UserService.create_user(session, user_data, user_role)
+        user_dict = TransformHelper.map_to_dict(user)
+        return UserResponse(**user_dict)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.post("/register-by-invitation", response_class=JSONResponse)
+async def register(
+    user_data: UserCreateByInvitationSchema,
+    session: AsyncSession = Depends(get_db)
+):
+    try:
+        user_role= RoleEnum.teacher
+        user = await UserService.create_user(session, user_data.user, user_role, user_data.token)
         user_dict = TransformHelper.map_to_dict(user)
         return UserResponse(**user_dict)
     except ValueError as e:
@@ -23,7 +37,7 @@ async def register(
     
 @router.post("/login", response_class=JSONResponse)
 async def login(
-    user_data: UserLogin, 
+    user_data: UserLoginSchema, 
     session: AsyncSession = Depends(get_db)
 ):
     try:

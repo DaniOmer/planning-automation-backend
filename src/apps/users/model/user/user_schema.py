@@ -6,20 +6,22 @@ from src.models import BaseSchema
 
 class RoleEnum(str, Enum):
     admin = "admin"
-    user = "teacher"
+    teacher = "teacher"
 
 class UserBase(BaseSchema):
     first_name: Optional[str]
     last_name: Optional[str]
     email: EmailStr
     phone_number: Optional[str]
-    role: RoleEnum
 
-class UserCreate(UserBase):
+class UserCreateSchema(UserBase):
     password: str
-    created_by: Optional[int]
 
-class UserLogin(BaseSchema):
+class UserCreateByInvitationSchema(BaseSchema):
+    user: UserCreateSchema
+    token: str
+
+class UserLoginSchema(BaseSchema):
     email: str
     password: str
 
