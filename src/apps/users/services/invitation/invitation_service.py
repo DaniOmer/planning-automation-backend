@@ -44,6 +44,31 @@ class InvitationService:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+    @staticmethod
+    async def accept_invitation(token: str, session: AsyncSession):
+        try:
+            stmt = await session.execute(select(Invitation).where(Invitation.token == token))
+            invitation = stmt.scalar_one_or_none()
+            if not invitation:
+                logger.warning("Invitation not found.")
+                raise ValueError("Invalid invitation token.")
+                
+            if invitation.is_disabled:
+                raise ValueError("This invitation is already disabled.")
+                
+            if invitation.expires_at < datetime.now():
+                raise ValueError("This invitation has expired.")
+
+            invitation.is_disabled = True
+            await session.commit()
+            
+            logger.info(f"Invitation accepted successfully for teacher with email: {invitation.email}")
+            return invitation
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     @staticmethod
     def send_invitation_email(invitation):

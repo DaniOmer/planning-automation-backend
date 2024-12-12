@@ -13,5 +13,7 @@ class InvitationCreateSchema(InvitationBase):
 class InvitationReadSchema(InvitationBase):
     id: int
     invited_by: int
+    expires_at: datetime
+    is_disabled: bool
     created_at: datetime
     expires_at: datetime

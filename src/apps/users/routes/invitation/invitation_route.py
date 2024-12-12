@@ -21,3 +21,16 @@ async def send_registration_invitation(
         return InvitationReadSchema(**invitation_dict)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+
+@router.get("/accept/{token}", response_class=JSONResponse)
+async def accept_registration_invitation(
+    token: str, 
+    session: AsyncSession = Depends(get_db)
+):
+    try:
+        invitation = await InvitationService.accept_invitation(token, session)
+        invitation_dict = TransformHelper.map_to_dict(invitation)
+        return InvitationReadSchema(**invitation_dict)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
