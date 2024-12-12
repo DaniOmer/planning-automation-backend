@@ -1,4 +1,5 @@
 import jwt
+import secrets
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer
 from passlib.context import CryptContext
@@ -38,15 +39,27 @@ class SecurityHelper:
                 status_code=status.HTTP_401_UNAUTHORIZED, 
                 detail="Token has expired"
             )
-        except jwt.PyJWTError:
+        except jwt.PyJWTError as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, 
-                detail="Invalid token"
+                detail=f"Invalid token {e}"
             )
-
+    
+    @staticmethod
+    def generate_random_token() -> str:
+        return secrets.token_urlsafe(32)
+        
+    @staticmethod
     async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
-        return SecurityHelper.decode_access_token(token.credentials)
+        payload = SecurityHelper.decode_access_token(token.credentials)
+        if payload is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token"
+            )
+        return payload 
 
+    @staticmethod
     def require_role(required_role: str):
         def role_checker(current_user=Depends(SecurityHelper.get_current_user)):
             if current_user["role"] != required_role:

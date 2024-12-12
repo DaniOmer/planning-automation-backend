@@ -9,7 +9,7 @@ from src.apps.schedules.model.years_groups_educational_courses.years_groups_educ
 from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_schema import YearsGroupsEducationalCoursesSchema
 from src.apps.schedules.services.years_groups_educational_courses.years_groups_educational_courses_service import YearsGroupsEducationalCoursesService
 
-router = APIRouter(prefix="/years-groups-educational-courses")
+router = APIRouter(prefix="/years-groups-educational-courses", tags=["YearsGroupsEducationalCourses"])
 
 
 @router.post("/", response_class=JSONResponse)

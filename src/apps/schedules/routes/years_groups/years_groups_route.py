@@ -8,7 +8,7 @@ from src.helpers import TransformHelper
 
 router = APIRouter(prefix="/years_groups")
 
-@router.post("/create", response_model=YearsGroupResponse)
+@router.post("/create", response_model=YearsGroupResponse, tags=["YearsGroupResponse"])
 async def create_years_group(
     group_data: YearsGroupCreate, 
     session: AsyncSession = Depends(get_db)

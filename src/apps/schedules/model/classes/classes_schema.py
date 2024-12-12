@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-from typing import Optional
+from src.models import BaseSchema
 
-class ClassCreate(BaseModel):
+class ClassCreate(BaseSchema):
     name: str
     number_students: int
     years_group_id: int
@@ -11,6 +11,3 @@ class ClassResponse(BaseModel):
     name: str
     number_students: int
     years_group_id: int
-
-    class Config:
-        orm_mode = True

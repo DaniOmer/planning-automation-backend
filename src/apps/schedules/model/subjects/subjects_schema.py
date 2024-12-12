@@ -1,8 +1,8 @@
-from pydantic import BaseModel
 from datetime import date
 from typing import Optional
+from src.models import BaseSchema
 
-class SubjectBase(BaseModel):
+class SubjectBase(BaseSchema):
     name: str
     hourly_volume: Optional[int]
     session_duration: Optional[float]
@@ -17,6 +17,3 @@ class SubjectUpdate(SubjectBase):
 
 class SubjectResponse(SubjectBase):
     id: int
-
-    class Config:
-        orm_mode = True

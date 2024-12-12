@@ -9,7 +9,7 @@ from src.apps.schedules.model.assignments_courses.assignment_course_model import
     AssignmentCourse
 from src.apps.schedules.model.assignments_courses.assignment_course_schema import \
     AssignmentCourseCreate
-from src.apps.users.model.user_model import User
+from src.apps.users.model.user.user_model import User
 from src.helpers import ValidationHelper
 
 

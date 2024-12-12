@@ -1,9 +1,11 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+from config import *
+from src.apps.users import UserRouter, InvitationRouter
 from src.apps.classrooms import ClassroomRouter
 from src.apps.schedules import (AssignmentCourseRouter, AvailabilitiesRouter,
                                 SubjectsRouter)
-from src.apps.users import UserRouter
 from src.apps.schedules import ClassesRouter, DayTypeRouter, EducationalCoursesRouter, YearsGroupsRouter, YearsGroupsEducationalCoursesRouter
 
 app = FastAPI(
@@ -21,8 +23,18 @@ app = FastAPI(
     },
 )
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=ALLOWED_METHODS,
+    allow_headers=ALLOWED_HEADERS,
+)
+
 # Routers
 app.include_router(UserRouter)
+app.include_router(InvitationRouter)
 app.include_router(ClassroomRouter)
 app.include_router(ClassesRouter)
 app.include_router(DayTypeRouter)

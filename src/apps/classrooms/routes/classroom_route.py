@@ -3,14 +3,13 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Import direct des schémas et du service pour éviter les cycles
 from src.apps.classrooms.model.classroom_schema import (ClassroomCreate,
                                                         ClassroomResponse)
 from src.apps.classrooms.services.classroom_service import ClassroomService
 from src.config.database_service import get_db
 from src.helpers import TransformHelper
 
-router = APIRouter(prefix="/classrooms")
+router = APIRouter(prefix="/classrooms", tags=["Classrooms"])
 
 @router.post("/", response_class=JSONResponse)
 async def create_classroom(

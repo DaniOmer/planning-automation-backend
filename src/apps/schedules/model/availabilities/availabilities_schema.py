@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from src.models import BaseSchema
 
-class AvailabilityBase(BaseModel):
+class AvailabilityBase(BaseSchema):
     comment: Optional[str]
     start_at: datetime
     end_at: datetime
@@ -16,6 +17,3 @@ class AvailabilityUpdate(AvailabilityBase):
 
 class AvailabilityResponse(AvailabilityBase):
     users_id: int
-
-    class Config:
-        orm_mode = True

@@ -7,15 +7,29 @@ from src.config.database_service import get_db
 from src.helpers import TransformHelper
 from src.helpers import SecurityHelper
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/register", response_class=JSONResponse)
 async def register(
-    user_data: UserCreate, 
+    user_data: UserCreateSchema, 
     session: AsyncSession = Depends(get_db)
 ):
     try:
-        user = await UserService.create_user(user_data, session)
+        user_role = RoleEnum.admin
+        user = await UserService.create_user(session, user_data, user_role)
+        user_dict = TransformHelper.map_to_dict(user)
+        return UserResponse(**user_dict)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.post("/register-by-invitation", response_class=JSONResponse)
+async def register(
+    user_data: UserCreateByInvitationSchema,
+    session: AsyncSession = Depends(get_db)
+):
+    try:
+        user_role= RoleEnum.teacher
+        user = await UserService.create_user(session, user_data.user, user_role, user_data.token)
         user_dict = TransformHelper.map_to_dict(user)
         return UserResponse(**user_dict)
     except ValueError as e:
@@ -23,11 +37,11 @@ async def register(
     
 @router.post("/login", response_class=JSONResponse)
 async def login(
-    user_data: UserLogin, 
+    user_data: UserLoginSchema, 
     session: AsyncSession = Depends(get_db)
 ):
     try:
-        data = await UserService.authenticate_user(user_data, session)
+        data = await UserService.authenticate_user(session, user_data)
         user_dict = TransformHelper.map_to_dict(data[0])
         return LoginResponse(
             user=UserResponse(**user_dict),

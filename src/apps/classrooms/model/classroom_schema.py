@@ -1,17 +1,13 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
+from src.models import BaseSchema
 
-# Schéma pour la création d'une salle
-class ClassroomCreate(BaseModel):
+class ClassroomCreate(BaseSchema):
     name: str
     capacity: int
 
-class ClassroomResponse(BaseModel):
+class ClassroomResponse(BaseSchema):
     id: int
     name: str
     capacity: int
 
-    class Config:
-        orm_mode = True 

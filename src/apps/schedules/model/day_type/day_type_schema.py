@@ -1,11 +1,8 @@
-from pydantic import BaseModel
+from src.models import BaseSchema
 
-class DayTypeCreate(BaseModel):
+class DayTypeCreate(BaseSchema):
     type: str
 
-class DayTypeResponse(BaseModel):
+class DayTypeResponse(BaseSchema):
     id: int
     type: str
-
-    class Config:
-        orm_mode = True

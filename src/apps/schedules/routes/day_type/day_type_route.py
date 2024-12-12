@@ -6,7 +6,7 @@ from src.apps.schedules.model.day_type.day_type_schema import DayTypeCreate, Day
 from src.apps.schedules.services.day_type.day_type_service import DayTypeService
 from src.helpers import TransformHelper
 
-router = APIRouter(prefix="/day_types")
+router = APIRouter(prefix="/day_types", tags=["DayTypes"])
 
 @router.post("/create", response_model=DayTypeResponse)
 async def create_day_type(

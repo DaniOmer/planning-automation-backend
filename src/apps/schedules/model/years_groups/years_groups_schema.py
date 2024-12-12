@@ -1,11 +1,9 @@
 from pydantic import BaseModel
+from src.models import BaseSchema
 
-class YearsGroupCreate(BaseModel):
+class YearsGroupCreate(BaseSchema):
     name: str
 
-class YearsGroupResponse(BaseModel):
+class YearsGroupResponse(BaseSchema):
     id: int
     name: str
-
-    class Config:
-        orm_mode = True
