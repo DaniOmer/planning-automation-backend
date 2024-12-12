@@ -2,17 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import *
-from src.apps.users import UserRouter, InvitationRouter
 from src.apps.classrooms import ClassroomRouter
-
-from src.apps.schedules import ClassesRouter, DayTypeRouter, EducationalCoursesRouter, YearsGroupsRouter, YearsGroupsEducationalCoursesRouter
 from src.apps.schedules import (AssignmentSubjectsRouter, AvailabilitiesRouter,
                                 ClassesRouter, DayTypeRouter,
-                                EducationalCoursesRouter, SubjectsRouter,
+                                EducationalCoursesRouter,
+                                SessionSubjectsRouter, SubjectsRouter,
                                 YearsGroupsEducationalCoursesRouter,
                                 YearsGroupsRouter)
-from src.apps.users import UserRouter
-
+from src.apps.users import InvitationRouter, UserRouter
 
 app = FastAPI(
     title="Planify API with documentation",
@@ -50,3 +47,4 @@ app.include_router(YearsGroupsEducationalCoursesRouter)
 app.include_router(AvailabilitiesRouter)
 app.include_router(SubjectsRouter)
 app.include_router(AssignmentSubjectsRouter)
+app.include_router(SessionSubjectsRouter)
