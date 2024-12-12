@@ -7,3 +7,4 @@ class EducationalCourses(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String(255), nullable=False)
     day = Column(Date, nullable=False)
+    day_type = Column(String(255), nullable=False)
