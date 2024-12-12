@@ -1,17 +1,16 @@
 from fastapi import HTTPException, status
 from loguru import logger
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 
 class ValidationHelper:
-    """Utility class for validating foreign key references"""
+    """Helper class for foreign key validation"""
 
     @staticmethod
     async def validate_id(model, record_id: int, session: AsyncSession, field_name: str):
         """
-        Validates if a record exists in the database.
+        Validate if a record exists in the database.
 
         Args:
             model: SQLAlchemy model class
@@ -23,7 +22,7 @@ class ValidationHelper:
             Instance of the model if found.
 
         Raises:
-            HTTPException: 404 if the record is not found.
+            HTTPException: 404 if the record is not found, 500 for unexpected errors.
         """
         logger.info(f"Validating {field_name} with ID: {record_id}")
         try:
@@ -36,9 +35,11 @@ class ValidationHelper:
                     detail=f"{field_name} with ID {record_id} not found"
                 )
             return instance
+        except HTTPException as e:
+            raise e
         except Exception as e:
-            logger.error(f"Unexpected error during {field_name} validation: {e}")
+            logger.error(f"Unexpected error validating {field_name} with ID {record_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error validating {field_name} with ID {record_id}"
+                detail=f"Unexpected error validating {field_name} with ID {record_id}"
             )
