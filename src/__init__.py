@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 
 from src.apps.classrooms import ClassroomRouter
+from src.apps.schedules import (AssignmentCourseRouter, AvailabilitiesRouter,
+                                SubjectsRouter)
 from src.apps.users import UserRouter
-from src.apps.schedules import AvailabilitiesRouter, SubjectsRouter
 
 app = FastAPI(
     title="Planify API with documentation",
@@ -24,3 +25,4 @@ app.include_router(UserRouter)
 app.include_router(ClassroomRouter)
 app.include_router(AvailabilitiesRouter)
 app.include_router(SubjectsRouter)
+app.include_router(AssignmentCourseRouter)
