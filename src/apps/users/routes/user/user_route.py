@@ -41,7 +41,7 @@ async def login(
     session: AsyncSession = Depends(get_db)
 ):
     try:
-        data = await UserService.authenticate_user(user_data, session)
+        data = await UserService.authenticate_user(session, user_data)
         user_dict = TransformHelper.map_to_dict(data[0])
         return LoginResponse(
             user=UserResponse(**user_dict),
