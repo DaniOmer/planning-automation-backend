@@ -14,13 +14,14 @@ class UserService:
     @staticmethod
     async def create_user(session: AsyncSession, user_data, user_role, token=None):
         try:
+            created_by = None
             if token is not None:
                 query = select(Invitation).where(Invitation.token == token)
                 result = await session.execute(query)
                 invitation = result.scalar_one_or_none()
                 if not invitation:
                     raise ValueError("Invalid invitation token.")
-                user_data.created_by = invitation.id
+                created_by = invitation.id
 
             hashed_password = SecurityHelper.get_password_hash(user_data.password)
             user = User(
@@ -30,7 +31,7 @@ class UserService:
                 last_name=user_data.last_name,
                 role=user_role,
                 phone_number=user_data.phone_number,
-                created_by=user_data.created_by,
+                created_by=created_by,
             )
             session.add(user)
             await session.commit()
