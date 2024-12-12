@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -13,10 +14,16 @@ class AssignmentCourseCreate(BaseModel):
 class ClassInfo(BaseModel):
     id: int
     name: str
+    number_students : int
 
 class CourseInfo(BaseModel):
     id: int
     name: str
+    hourly_volume: float
+    session_duration: float
+    start_at: date
+    end_at: date
+    
 
 class UserInfo(BaseModel):
     id: int
