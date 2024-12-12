@@ -2,7 +2,7 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.apps.schedules.model.availabilities.availabilities_model import Availabilities
 from src.apps.schedules.model.availabilities.availabilities_schema import AvailabilityCreate, AvailabilityUpdate
-from src.apps.users.model.user_model import User
+from src.apps.users.model.user.user_model import User
 
 async def get_availabilities(db: AsyncSession):
     result = await db.execute(select(Availabilities))
