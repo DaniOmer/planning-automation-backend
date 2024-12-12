@@ -36,7 +36,7 @@ class AssignmentCourseService:
             await ValidationHelper.validate_id(Classes, data.classes_id, session, "Class")
             await ValidationHelper.validate_id(Subjects, data.courses_id, session, "Subject")
 
-            assignment_data = data.dict()
+            assignment_data = data.model_dump()
             logger.debug(f"Cleaned data for AssignmentCourse creation: {assignment_data}")
 
             assignment_course = AssignmentCourse(**assignment_data)

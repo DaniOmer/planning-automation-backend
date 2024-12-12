@@ -11,7 +11,7 @@ from src.config.database_service import get_db
 
 router = APIRouter(prefix="/assignments-courses", tags=["AssignmentsCourses"])
 
-@router.post("/", response_class=JSONResponse, response_model=AssignmentCourseResponse)
+@router.post("/", response_class=JSONResponse)
 async def create_assignment_course(
     data: AssignmentCourseCreate,
     session: AsyncSession = Depends(get_db)
