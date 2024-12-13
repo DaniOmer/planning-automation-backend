@@ -9,10 +9,13 @@ from sqlalchemy.orm import selectinload
 from src.apps.classrooms.model.classroom_model import Classroom
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import \
     AssignmentSubject
+from src.apps.schedules.model.classes.classes_model import Classes
 from src.apps.schedules.model.sessions_subjects.sessions_subjects_model import \
     SessionSubject
 from src.apps.schedules.model.sessions_subjects.sessions_subjects_schema import (
     SessionSubjectCreate, SessionSubjectUpdate)
+from src.apps.schedules.model.subjects.subjects_model import Subjects
+from src.apps.users.model.user.user_model import User
 from src.helpers import ValidationHelper
 
 
@@ -194,3 +197,66 @@ class SessionSubjectService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete session_subject"
             )
+    
+    @staticmethod
+    async def get_teacher_sessions(teacher_id: int, session: AsyncSession):
+        teacher_user = await ValidationHelper.validate_id(User, teacher_id, session, "User")
+
+        query = (
+            select(SessionSubject)
+            .options(
+                selectinload(SessionSubject.classroom_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+            )
+            .join(SessionSubject.assignment_info)
+            .where(AssignmentSubject.users_id == teacher_id)
+        )
+
+        result = await session.execute(query)
+        sessions = result.scalars().all()
+        logger.info(f"Fetched {len(sessions)} SessionSubjects for teacher ID: {teacher_id}")
+        return sessions
+
+    @staticmethod
+    async def get_class_sessions(class_id: int, session: AsyncSession):
+        await ValidationHelper.validate_id(Classes, class_id, session, "Classes")
+
+        query = (
+            select(SessionSubject)
+            .options(
+                selectinload(SessionSubject.classroom_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+            )
+            .join(SessionSubject.assignment_info)
+            .where(AssignmentSubject.classes_id == class_id)
+        )
+
+        result = await session.execute(query)
+        sessions = result.scalars().all()
+        logger.info(f"Fetched {len(sessions)} SessionSubjects for class ID: {class_id}")
+        return sessions
+
+    @staticmethod
+    async def get_subject_sessions(subject_id: int, session: AsyncSession):
+        await ValidationHelper.validate_id(Subjects, subject_id, session, "Subject")
+
+        query = (
+            select(SessionSubject)
+            .options(
+                selectinload(SessionSubject.classroom_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+            )
+            .join(SessionSubject.assignment_info)
+            .where(AssignmentSubject.subjects_id == subject_id)
+        )
+
+        result = await session.execute(query)
+        sessions = result.scalars().all()
+        logger.info(f"Fetched {len(sessions)} SessionSubjects for subject ID: {subject_id}")
+        return sessions
