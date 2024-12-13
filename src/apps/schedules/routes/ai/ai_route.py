@@ -4,8 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import openai
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from src.config.database_service import get_db
-from src.apps.schedules.services.ai.ai_services import get_all_teachers_and_availabilities
+from src.apps.schedules.services.ai.ai_services import *
 from src.helpers.security_helper import SecurityHelper
 
 # Charger les variables d'environnement depuis .env
@@ -75,3 +76,26 @@ async def available_teachers_route(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la communication avec OpenAI : {str(e)}")
+
+
+class AvailabilityRequest(BaseModel):
+    availability_text: str
+
+@router.post("/professor_availability")
+async def professor_availability_route(
+    availability_data: AvailabilityRequest,
+    current_user=Depends(SecurityHelper.get_current_user)
+):
+    """
+    Endpoint pour générer un JSON structuré des disponibilités d'un professeur à partir d'un texte libre.
+    """
+    if current_user["role"] != "teacher":
+        raise HTTPException(status_code=403, detail="Accès réservé aux enseignants.")
+
+    try:
+        availability_json = await generate_availability_json(availability_data.availability_text)
+        return {"availability_json": availability_json}
+
+    except ValueError as e:
+        print("Erreur d'analyse :", str(e))  # Log la réponse brute pour inspection
+        raise HTTPException(status_code=500, detail=str(e))
