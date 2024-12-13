@@ -43,3 +43,28 @@ class ClassroomService:
         result = await session.execute(query)
         classrooms = result.scalars().all()
         return classrooms
+
+    @staticmethod
+    async def update_classroom(classroom_id: int, classroom_data: ClassroomCreate, session: AsyncSession):
+        classroom = await ClassroomService.get_classroom_by_id(classroom_id, session)
+        classroom.name = classroom_data.name
+        classroom.capacity = classroom_data.capacity
+        try:
+            await session.commit()
+            await session.refresh(classroom)
+            logger.info(f"Classroom with ID {classroom_id} updated successfully")
+            return classroom
+        except IntegrityError as e:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    @staticmethod
+    async def delete_classroom(classroom_id: int, session: AsyncSession):
+        classroom = await ClassroomService.get_classroom_by_id(classroom_id, session)
+        try:
+            await session.delete(classroom)
+            await session.commit()
+            logger.info(f"Classroom with ID {classroom_id} deleted successfully")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
