@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import AssignmentSubject
 from src.apps.schedules.model.availabilities.availabilities_model import Availabilities
+from datetime import datetime
 import openai
 import json
 
@@ -58,17 +59,20 @@ async def generate_availability_json(availability_text: str):
     :param availability_text: Texte décrivant les disponibilités.
     :return: JSON structuré des disponibilités.
     """
+    current_year = datetime.now().year
     prompt = (
-        "Je veux que tu prennes le texte ci-dessous qui décrit les disponibilités d'un enseignant "
-        "et que tu génères un JSON structuré. Le JSON doit contenir une liste de dates, et pour chaque date, "
-        "indiquer si l'enseignant est disponible le matin ('morning': TRUE/FALSE) et/ou l'après-midi ('afternoon': TRUE/FALSE). "
+        f"Je veux que tu prennes le texte ci-dessous qui décrit les disponibilités d'un enseignant "
+        f"(si l'enseignant n'inclut pas l'année dans sa disponibilité alors part du principe qu'il parle de l'année {current_year}) "
+        f"et que tu génères un JSON structuré. Le JSON doit contenir une liste de dates, et pour chaque date, "
+        f"indiquer si l'enseignant est disponible le matin ('morning': true/false) et/ou l'après-midi ('afternoon': true/false). "
         "Exemple de JSON attendu :\n"
         "[\n"
-        "    {\"date\": \"2024-12-09\", \"morning\": TRUE, \"afternoon\": FALSE},\n"
-        "    {\"date\": \"2024-12-10\", \"morning\": TRUE, \"afternoon\": FALSE}\n"
+        "    {\"date\": \"2024-12-09\", \"morning\": true, \"afternoon\": false},\n"
+        "    {\"date\": \"2024-12-10\", \"morning\": true, \"afternoon\": true}\n"
         "]\n"
-        f"Voici le texte de l'enseignant : {availability_text}"
-        f"Ne reponds rien de plus que le json"
+        "N'inclus pas les samedis et dimanches.\n"
+        f"Voici le texte de l'enseignant : {availability_text}\n"
+        "Ne réponds rien de plus que le JSON."
     )
 
     try:
