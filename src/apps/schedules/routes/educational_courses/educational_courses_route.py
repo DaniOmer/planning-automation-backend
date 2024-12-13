@@ -9,6 +9,7 @@ from src.helpers import TransformHelper
 from sqlalchemy.future import select
 import pandas as pd
 import io
+from src.utils.csv_utils import import_csv
 
 router = APIRouter(prefix="/educational_courses", tags=["EducationalCourses"])
 
@@ -37,30 +38,18 @@ async def import_educational_courses(
     if not years_group:
         raise HTTPException(status_code=404, detail="Years group not found")
 
-    try:
-        content = await file.read()
-        df = pd.read_csv(io.BytesIO(content))
+    required_columns = ["id", "description", "day", "day_type"]
 
-        required_columns = ["id", "description", "day", "day_type"]
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            raise ValueError(f"Missing required columns in CSV: {', '.join(missing_columns)}. Expected: {', '.join(required_columns)}")
-        if not all(col in df.columns for col in required_columns):
-            raise ValueError(f"Missing required columns in CSV. Expected: {', '.join(required_columns)}")
+    additional_data = {"years_group_id": years_group_id}
 
-        for _, row in df.iterrows():
-            course_data = EducationalCourseCreate(
-                id=row["id"],
-                description=row.get("description", ""),
-                day=row.get("day", ""),
-                day_type=row.get("day_type", ""),
-                years_group_id=years_group_id,
-            )
-            await EducationalCourseService.create_educational_course(course_data, session)
-
-        return {"detail": "Courses successfully imported from CSV"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to process CSV: {str(e)}")
+    return await import_csv(
+        file=file,
+        session=session,
+        entity_class=EducationalCourseCreate,
+        create_service=EducationalCourseService.create_educational_course,
+        required_columns=required_columns,
+        additional_data=additional_data,
+    )
 
 @router.get("/", response_model=list[EducationalCourseResponse])
 async def get_educational_courses(session: AsyncSession = Depends(get_db)):
