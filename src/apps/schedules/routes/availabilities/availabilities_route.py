@@ -17,7 +17,8 @@ async def read_availabilities(db: AsyncSession = Depends(get_db),
     return await get_availabilities(db)
 
 @router.get("/user/{users_id}", response_model=list[AvailabilityResponse])
-async def read_availability_by_users_id(users_id: int, db: AsyncSession = Depends(get_db)):
+async def read_availability_by_users_id(users_id: int, db: AsyncSession = Depends(get_db),
+                                        current_user=Depends(SecurityHelper.get_current_user)):
     availability = await get_availabilities_by_users_id(db, users_id)
     if not availability:
         raise HTTPException(status_code=404, detail="No availabilities found for this user")
