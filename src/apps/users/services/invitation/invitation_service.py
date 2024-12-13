@@ -78,8 +78,8 @@ class InvitationService:
             html_content=f"""
                 <h1>Invitation to join Planify</h1>
                 <p>Click the link below to accept the invitation:</p>
-                <a href="{FRONTEND_URL}/users/invitation/accept/{invitation.token}">Accept Invitation</a>
-                <p>Copie the following link if the invitation button does not working : {FRONTEND_URL}/users/invitation/accept/{invitation.token}</p>
+                <a href="{FRONTEND_URL}/registerTeacher?security={invitation.token}">Accept Invitation</a>
+                <p>Copie the following link if the invitation button does not working : {FRONTEND_URL}/registerTeacher?security={invitation.token}</p>
                 <p>This invitation will expire in {INVITATION_EXPIRATION_DAYS} days.</p>
             """,
             text_content=f"Invitation to join Planify. Click the link below to accept the invitation: {FRONTEND_URL}/users/invitation/accept/{invitation.token}"
