@@ -30,7 +30,7 @@ async def create_assignment_course(
 @router.get("/", response_class=JSONResponse, response_model=list[AssignmentSubjectResponse])
 async def list_assignment_courses(
     session: AsyncSession = Depends(get_db),
-    current_user=Depends(SecurityHelper.require_role("admin"))
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     try:
         return await AssignmentsSubjectsService.list_assignment_courses(session)
