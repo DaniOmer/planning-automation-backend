@@ -14,6 +14,7 @@ from src.apps.schedules import YearsGroupsEducationalCourses
 from src.apps.schedules import Availabilities
 from src.apps.schedules import Subjects
 from src.apps.schedules import AssignmentSubject
+from src.apps.schedules.model.sessions_subjects.sessions_subjects_model import SessionSubject
 
 from alembic import context
 # this is the Alembic Config object, which provides

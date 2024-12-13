@@ -1,5 +1,4 @@
 
-from src.apps.schedules.services.assignments_subjects.assignments_subjects_services import *
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import *
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_schema import *
 from src.apps.schedules.model.availabilities.availabilities_model import *
@@ -26,10 +25,13 @@ from src.apps.schedules.routes.day_type.day_type_route import \
     router as DayTypeRouter
 from src.apps.schedules.routes.educational_courses.educational_courses_route import \
     router as EducationalCoursesRouter
+from src.apps.schedules.routes.sessions_subjects.sessions_subjects_route import \
+    router as SessionSubjectsRouter
 from src.apps.schedules.routes.subjects.subjects_route import \
     router as SubjectsRouter
 from src.apps.schedules.routes.years_groups.years_groups_route import \
     router as YearsGroupsRouter
 from src.apps.schedules.routes.years_groups_educational_courses.years_groups_educational_courses_route import \
     router as YearsGroupsEducationalCoursesRouter
+from src.apps.schedules.services.assignments_subjects.assignments_subjects_services import *
 from src.apps.schedules.services.classes.classes_service import *

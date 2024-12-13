@@ -3,9 +3,9 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.apps.schedules import (
-    AssignmentSubjectCreate, AssignmentSubjectResponse)
-from src.apps.schedules import \
+from src.apps.schedules import (AssignmentSubjectCreate,
+                                AssignmentSubjectResponse)
+from src.apps.schedules.services.assignments_subjects.assignments_subjects_services import \
     AssignmentsSubjectsService
 from src.config.database_service import get_db
 
