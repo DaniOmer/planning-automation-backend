@@ -8,7 +8,7 @@ from src.apps.schedules import (AssignmentSubjectsRouter, AvailabilitiesRouter,
                                 EducationalCoursesRouter,
                                 SessionSubjectsRouter, SubjectsRouter,
                                 YearsGroupsEducationalCoursesRouter,
-                                YearsGroupsRouter)
+                                YearsGroupsRouter, AiRouter)
 from src.apps.users import InvitationRouter, UserRouter
 
 app = FastAPI(
@@ -48,3 +48,4 @@ app.include_router(AvailabilitiesRouter)
 app.include_router(SubjectsRouter)
 app.include_router(AssignmentSubjectsRouter)
 app.include_router(SessionSubjectsRouter)
+app.include_router(AiRouter)

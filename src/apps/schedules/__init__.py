@@ -15,6 +15,8 @@ from src.apps.schedules.model.years_groups.years_groups_model import *
 from src.apps.schedules.model.years_groups.years_groups_schema import *
 from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import *
 from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_schema import *
+
+from src.apps.schedules.routes.ai.ai_route import router as AiRouter
 from src.apps.schedules.routes.assignments_subjects.assignments_subjects_route import \
     router as AssignmentSubjectsRouter
 from src.apps.schedules.routes.availabilities.availabilities_route import \

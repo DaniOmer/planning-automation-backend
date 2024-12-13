@@ -5,7 +5,7 @@ import openai
 import os
 from dotenv import load_dotenv
 from src.config.database_service import get_db
-from src.apps.schedules.services.ai.ai_services import find_teachers_for_subject
+from src.apps.schedules.services.ai.ai_services import get_all_teachers_and_availabilities
 
 # Charger les variables d'environnement depuis .env
 load_dotenv()
@@ -27,27 +27,24 @@ async def available_teachers_route(
     """
     Endpoint pour récupérer les enseignants disponibles pour un sujet donné dans une plage horaire.
     """
-    # Étape 1 : Récupérer les enseignants disponibles via le service
-    teachers = await find_teachers_for_subject(subject_id, start_date, end_date, session)
+    # Récupérer les enseignants et leurs disponibilités
+    teachers, availabilities = await get_all_teachers_and_availabilities(subject_id, session)
 
     if not teachers:
-        raise HTTPException(status_code=404, detail="Aucun enseignant disponible trouvé pour cette plage horaire.")
+        raise HTTPException(status_code=404, detail="Aucun enseignant trouvé pour ce sujet.")
 
-    # Étape 2 : Formater les données pour l'IA
-    formatted_teachers = [
-        f"{teacher['name']} ({teacher['email']})"
+    # Préparer les données pour l'IA
+    all_teachers_text = "\n".join([
+        f"{teacher['name']} ({teacher['email']}, {teacher['phone_number']})"
         for teacher in teachers
-    ]
-    teachers_text = "\n".join(formatted_teachers)
+    ])
 
-    # Vérification si des enseignants sont trouvés avant d'appeler OpenAI
-    if not formatted_teachers:
-        return {
-            "teachers": teachers,
-            "ai_response": "Aucun enseignant disponible n'a été trouvé pour ce sujet et cette plage horaire."
-        }
+    availabilities_text = "\n".join([
+        f"User ID {availability['user_id']}: {availability['start_at']} - {availability['end_at']}"
+        for availability in availabilities
+    ])
 
-    # Étape 3 : Générer une réponse avec OpenAI
+    # Générer une réponse avec OpenAI
     try:
         ai_response = await openai.ChatCompletion.acreate(
             model="gpt-4",
@@ -59,15 +56,19 @@ async def available_teachers_route(
                 {
                     "role": "user",
                     "content": (
-                        f"Voici une liste des enseignants disponibles pour enseigner le sujet avec l'ID {subject_id} "
-                        f"entre {start_date} et {end_date} :\n{teachers_text}\n"
-                        "Pouvez-vous indiquer les enseignants les plus adaptés à enseigner ce sujet ?"
+                        f"Je veux que tu m'aides à trouver des professeurs qui enseignent le sujet avec l'ID {subject_id} "
+                        f"et qui sont disponibles entre {start_date} et {end_date}. Voici la liste des professeurs de mon école "
+                        f"qui enseignent le sujet avec l'ID {subject_id} :\n{all_teachers_text}\n"
+                        f"Et voici leurs disponibilités :\n{availabilities_text}\n"
+                        "Réponds-moi en me disant que grâce à toutes les données de la base de données voici la liste des professeurs disponibles dans ma tranche horaire transmise sous forme de tirets : "
+                        "- Prénom NOM (mail numéro)."
+                        f"Si tu ne trouves aucun resultat, reponds qu'aucun professeur n'est disponible pour cette matière entre le {start_date} et {end_date}"
+                        f"Réponse professionnelles seulement"
                     )
                 },
             ],
         )
         return {
-            "teachers": teachers,
             "ai_response": ai_response.choices[0].message["content"]
         }
     except Exception as e:

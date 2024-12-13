@@ -1,59 +1,49 @@
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import AssignmentSubject
 from src.apps.schedules.model.availabilities.availabilities_model import Availabilities
-from src.apps.users.model.user.user_model import User
-from datetime import datetime
-from sqlalchemy import select, and_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-async def find_teachers_for_subject(
+async def get_all_teachers_and_availabilities(
     subject_id: int,
-    start_date: datetime,
-    end_date: datetime,
     session: AsyncSession
 ):
     """
-    Trouve les enseignants disponibles pour un sujet donné dans une plage horaire définie.
+    Récupère tous les enseignants associés à un sujet avec leurs disponibilités.
 
     :param subject_id: Identifiant du sujet enseigné.
-    :param start_date: Date et heure de début de la plage horaire.
-    :param end_date: Date et heure de fin de la plage horaire.
     :param session: Session de base de données asynchrone.
-    :return: Liste des enseignants disponibles avec leurs informations.
+    :return: Liste des enseignants et leurs disponibilités.
     """
-    # Étape 1 : Récupérer les enseignants associés au sujet
-    subject_stmt = select(AssignmentSubject).options(
-        joinedload(AssignmentSubject.user_info),
-        joinedload(AssignmentSubject.subject_info)
+    # Récupérer les enseignants associés au sujet
+    teachers_stmt = select(AssignmentSubject).options(
+        joinedload(AssignmentSubject.user_info)
     ).where(AssignmentSubject.subjects_id == subject_id)
-    subject_results = await session.execute(subject_stmt)
-    assignments = subject_results.scalars().all()
+    teachers_results = await session.execute(teachers_stmt)
+    assignments = teachers_results.scalars().all()
 
-    # Étape 2 : Filtrer les enseignants disponibles
-    available_teachers = []
-    seen_teachers = set()  # Pour éviter les doublons
+    # Construire les données des enseignants et leurs disponibilités
+    teachers = []
+    availabilities_stmt = select(Availabilities)
+    availabilities_results = await session.execute(availabilities_stmt)
+    all_availabilities = availabilities_results.scalars().all()
 
     for assignment in assignments:
         teacher = assignment.user_info
-        if teacher.role != "teacher":
-            continue  # Ignorer si ce n'est pas un enseignant
+        teachers.append({
+            "id": teacher.id,
+            "name": f"{teacher.first_name} {teacher.last_name}",
+            "email": teacher.email,
+            "phone_number": teacher.phone_number
+        })
 
-        # Vérifier les disponibilités de l'enseignant
-        availability_stmt = select(Availabilities).where(
-            and_(
-                Availabilities.users_id == teacher.id,
-                Availabilities.start_at <= start_date,
-                Availabilities.end_at >= end_date
-            )
-        )
-        availability_result = await session.execute(availability_stmt)
-        availability = availability_result.scalar_one_or_none()
+    availabilities = [
+        {
+            "user_id": availability.users_id,
+            "start_at": availability.start_at,
+            "end_at": availability.end_at,
+        }
+        for availability in all_availabilities
+    ]
 
-        if availability and teacher.id not in seen_teachers:
-            available_teachers.append({
-                "name": f"{teacher.first_name} {teacher.last_name}",
-                "email": teacher.email
-            })
-            seen_teachers.add(teacher.id)
-
-    return available_teachers
+    return teachers, availabilities
