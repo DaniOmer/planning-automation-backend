@@ -4,9 +4,9 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class AssignmentCourseCreate(BaseModel):
+class AssignmentSubjectCreate(BaseModel):
     classes_id: int
-    courses_id: int
+    subjects_id: int
     users_id: int
     url_online: Optional[str] = Field(default=None)
 
@@ -14,30 +14,30 @@ class AssignmentCourseCreate(BaseModel):
 class ClassInfo(BaseModel):
     id: int
     name: str
-    number_students : int
+    number_students: int
 
-class CourseInfo(BaseModel):
+
+class SubjectInfo(BaseModel):
     id: int
     name: str
     hourly_volume: float
     session_duration: float
     start_at: date
     end_at: date
-    
+
 
 class UserInfo(BaseModel):
     id: int
     first_name: str
     last_name: str
 
-class AssignmentCourseResponse(BaseModel):
+
+class AssignmentSubjectResponse(BaseModel):
     id: int
     classes_id: int
-    courses_id: int
+    subjects_id: int
     users_id: int
     url_online: Optional[str]
     class_info: Optional[ClassInfo]
-    course_info: Optional[CourseInfo]
+    subject_info: Optional[SubjectInfo]
     user_info: Optional[UserInfo]
-
-
