@@ -1,24 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.config.database_service import get_db
-from src.apps.schedules.services.availabilities.availabilities_service import (
-    get_availabilities,
-    get_availabilities_by_users_id,
-    create_availability,
-    update_availability,
-    delete_availability
-)
+
 from src.apps.schedules.model.availabilities.availabilities_schema import (
-    AvailabilityCreate,
-    AvailabilityUpdate,
-    AvailabilityResponse
-)
+    AvailabilityCreate, AvailabilityResponse, AvailabilityUpdate)
+from src.apps.schedules.services.availabilities.availabilities_service import (
+    create_availability, delete_availability, get_availabilities,
+    get_availabilities_by_users_id, update_availability)
+from src.config.database_service import get_db
 from src.helpers import SecurityHelper
 
 router = APIRouter(prefix="/availabilities")
 
 @router.get("/", response_model=list[AvailabilityResponse])
-async def read_availabilities(db: AsyncSession = Depends(get_db)):
+async def read_availabilities(db: AsyncSession = Depends(get_db),
+                              current_user=Depends(SecurityHelper.get_current_user)):
     return await get_availabilities(db)
 
 @router.get("/user/{users_id}", response_model=list[AvailabilityResponse])
@@ -32,7 +27,7 @@ async def read_availability_by_users_id(users_id: int, db: AsyncSession = Depend
 async def create_new_availability(
     availability: AvailabilityCreate, 
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(SecurityHelper.require_role("admin"))
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     try:
         return await create_availability(db, availability)
@@ -44,7 +39,7 @@ async def update_existing_availability(
     availability_id: int, 
     availability: AvailabilityUpdate, 
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(SecurityHelper.require_role("admin"))
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     try:
         updated = await update_availability(db, availability_id, availability)
@@ -58,7 +53,7 @@ async def update_existing_availability(
 async def delete_existing_availability(
     availability_id: int, 
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(SecurityHelper.require_role("admin"))
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     deleted = await delete_availability(db, availability_id)
     if not deleted:

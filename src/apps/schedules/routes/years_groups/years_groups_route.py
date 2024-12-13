@@ -1,9 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.apps.schedules.model.years_groups.years_groups_model import \
+    YearsGroups
+from src.apps.schedules.model.years_groups.years_groups_schema import (
+    YearsGroupCreate, YearsGroupResponse)
+from src.apps.schedules.services.years_groups.years_groups_service import \
+    YearsGroupService
 from src.config.database_service import get_db
-from src.apps.schedules.model.years_groups.years_groups_model import YearsGroups
-from src.apps.schedules.model.years_groups.years_groups_schema import YearsGroupCreate, YearsGroupResponse
-from src.apps.schedules.services.years_groups.years_groups_service import YearsGroupService
 from src.helpers import TransformHelper
 from src.helpers.security_helper import SecurityHelper
 
@@ -25,7 +29,8 @@ async def create_years_group(
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 @router.get("/", response_model=list[YearsGroupResponse])
-async def get_years_groups(session: AsyncSession = Depends(get_db)):
+async def get_years_groups(session: AsyncSession = Depends(get_db),
+                           current_user=Depends(SecurityHelper.get_current_user)):
     try:
         result = await YearsGroupService.get_all_years_groups(session)
         return [YearsGroupResponse(**TransformHelper.map_to_dict(item)) for item in result]

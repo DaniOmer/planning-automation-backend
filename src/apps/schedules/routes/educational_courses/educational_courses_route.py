@@ -1,18 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import YearsGroupsEducationalCourses
-from src.config.database_service import get_db
-from src.apps.schedules.model.educational_courses.educational_courses_model import EducationalCourses
-from src.apps.schedules.model.educational_courses.educational_courses_schema import EducationalCourseCreate, EducationalCourseResponse
-from src.apps.schedules.services.educational_courses.educational_courses_service import EducationalCourseService
-from src.apps.schedules.model.years_groups.years_groups_model import YearsGroups
-from src.helpers import TransformHelper
-from sqlalchemy.future import select
-import pandas as pd
 import io
-from src.utils.csv_utils import import_csv
+
+import pandas as pd
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import insert
-from src.helpers import TransformHelper, SecurityHelper
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from src.apps.schedules.model.educational_courses.educational_courses_model import \
+    EducationalCourses
+from src.apps.schedules.model.educational_courses.educational_courses_schema import (
+    EducationalCourseCreate, EducationalCourseResponse)
+from src.apps.schedules.model.years_groups.years_groups_model import \
+    YearsGroups
+from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import \
+    YearsGroupsEducationalCourses
+from src.apps.schedules.services.educational_courses.educational_courses_service import \
+    EducationalCourseService
+from src.config.database_service import get_db
+from src.helpers import SecurityHelper, TransformHelper
+from src.utils.csv_utils import import_csv
 
 router = APIRouter(prefix="/educational_courses", tags=["EducationalCourses"])
 
@@ -71,7 +77,10 @@ async def import_educational_courses(
         raise HTTPException(status_code=500, detail=f"Failed to process CSV: {str(e)}")
 
 @router.get("/", response_model=list[EducationalCourseResponse])
-async def get_educational_courses(session: AsyncSession = Depends(get_db)):
+async def get_educational_courses(
+    session: AsyncSession = Depends(get_db),
+    current_user= Depends(SecurityHelper.get_current_user)
+                                  ):
     try:
         result = await EducationalCourseService.get_all_educational_courses(session)
         return [EducationalCourseResponse(**TransformHelper.map_to_dict(item)) for item in result]
