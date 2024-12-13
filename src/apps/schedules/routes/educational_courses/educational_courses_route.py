@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import YearsGroupsEducationalCourses
 from src.config.database_service import get_db
 from src.apps.schedules.model.educational_courses.educational_courses_model import EducationalCourses
 from src.apps.schedules.model.educational_courses.educational_courses_schema import EducationalCourseCreate, EducationalCourseResponse
@@ -10,6 +11,7 @@ from sqlalchemy.future import select
 import pandas as pd
 import io
 from src.utils.csv_utils import import_csv
+from sqlalchemy import insert
 
 router = APIRouter(prefix="/educational_courses", tags=["EducationalCourses"])
 
@@ -40,16 +42,30 @@ async def import_educational_courses(
 
     required_columns = ["id", "description", "day", "day_type"]
 
-    additional_data = {"years_group_id": years_group_id}
+    async def link_to_years_groups(course, row, session):
+        years_groups_course_data = {
+            "educational_courses_id": course.id,
+            "years_group_id": years_group_id,
+            "day_type": row.get("day_type")
+        }
+        await session.execute(
+            insert(YearsGroupsEducationalCourses).values(years_groups_course_data)
+        )
+        await session.commit()
 
-    return await import_csv(
-        file=file,
-        session=session,
-        entity_class=EducationalCourseCreate,
-        create_service=EducationalCourseService.create_educational_course,
-        required_columns=required_columns,
-        additional_data=additional_data,
-    )
+    try:
+        return await import_csv(
+            file=file,
+            session=session,
+            entity_class=EducationalCourseCreate,
+            create_service=EducationalCourseService.create_educational_course,
+            required_columns=required_columns,
+            post_create_action=link_to_years_groups,
+        )
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"Missing required column: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process CSV: {str(e)}")
 
 @router.get("/", response_model=list[EducationalCourseResponse])
 async def get_educational_courses(session: AsyncSession = Depends(get_db)):

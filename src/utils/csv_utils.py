@@ -24,7 +24,8 @@ async def import_csv(
     entity_class,
     create_service,
     required_columns: list,
-    additional_data: dict = None
+    additional_data: dict = None,
+    post_create_action=None
 ):
     """
     Generic utility function to import data from a CSV file into the database.
@@ -35,6 +36,7 @@ async def import_csv(
     :param create_service: Service function to create an entity instance in the database
     :param required_columns: List of required columns in the CSV file
     :param additional_data: Additional data to include in each row (e.g., foreign key IDs)
+    :param post_create_action: Optional callback to execute additional logic after creating the main entity
     :return: Success message
     :raises HTTPException: If CSV processing fails
     """
@@ -46,11 +48,17 @@ async def import_csv(
 
         validate_csv_columns(df, required_columns)
 
+        expected_columns = required_columns + list(additional_data.keys())
+        df = df[expected_columns]
+
         for _, row in df.iterrows():
             entity_data = {col: row.get(col, None) for col in required_columns}
             entity_data.update(additional_data)
 
-            await create_service(entity_class(**entity_data), session)
+            created_entity = await create_service(entity_class(**entity_data), session)
+
+            if post_create_action:
+                await post_create_action(created_entity, row, session)
 
         return {"detail": "Data successfully imported from CSV"}
     except Exception as e:
