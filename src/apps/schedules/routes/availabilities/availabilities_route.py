@@ -13,6 +13,7 @@ from src.apps.schedules.model.availabilities.availabilities_schema import (
     AvailabilityUpdate,
     AvailabilityResponse
 )
+from src.helpers import SecurityHelper
 
 router = APIRouter(prefix="/availabilities")
 
@@ -28,14 +29,23 @@ async def read_availability_by_users_id(users_id: int, db: AsyncSession = Depend
     return availability
 
 @router.post("/", response_model=AvailabilityResponse)
-async def create_new_availability(availability: AvailabilityCreate, db: AsyncSession = Depends(get_db)):
+async def create_new_availability(
+    availability: AvailabilityCreate, 
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
+):
     try:
         return await create_availability(db, availability)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/{availability_id}", response_model=AvailabilityResponse)
-async def update_existing_availability(availability_id: int, availability: AvailabilityUpdate, db: AsyncSession = Depends(get_db)):
+async def update_existing_availability(
+    availability_id: int, 
+    availability: AvailabilityUpdate, 
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
+):
     try:
         updated = await update_availability(db, availability_id, availability)
         if not updated:
@@ -45,7 +55,11 @@ async def update_existing_availability(availability_id: int, availability: Avail
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{availability_id}")
-async def delete_existing_availability(availability_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_existing_availability(
+    availability_id: int, 
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
+):
     deleted = await delete_availability(db, availability_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Availability not found")

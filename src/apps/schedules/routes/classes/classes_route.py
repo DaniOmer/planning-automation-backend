@@ -6,14 +6,15 @@ from src.config.database_service import get_db
 from src.apps.schedules.model.classes.classes_model import Classes
 from src.apps.schedules.model.classes.classes_schema import ClassCreate, ClassResponse
 from src.apps.schedules.services.classes.classes_service import ClassService
-from src.helpers import TransformHelper
+from src.helpers import TransformHelper, SecurityHelper
 
 router = APIRouter(prefix="/classes", tags=["Classes"])
 
 @router.post("/create", response_model=ClassResponse)
 async def create_class(
     class_data: ClassCreate, 
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     try:
         # Création de la classe via le service
@@ -44,7 +45,8 @@ async def get_class(class_id: int, session: AsyncSession = Depends(get_db)):
 async def update_class(
     class_id: int, 
     class_data: ClassCreate, 
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     updated_class = await ClassService.update_class(class_id, class_data, session)
     if not updated_class:
@@ -52,7 +54,11 @@ async def update_class(
     return ClassResponse(**TransformHelper.map_to_dict(updated_class))
 
 @router.delete("/{class_id}", response_model=dict)
-async def delete_class(class_id: int, session: AsyncSession = Depends(get_db)):
+async def delete_class(
+    class_id: int, 
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
+):
     success = await ClassService.delete_class(class_id, session)
     if not success:
         raise HTTPException(status_code=404, detail="Class not found")
