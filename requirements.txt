@@ -12,3 +12,4 @@ pyjwt
 sib-api-v3-sdk
 pandas
 faker
+openai
