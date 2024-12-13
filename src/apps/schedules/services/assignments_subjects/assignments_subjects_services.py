@@ -1,16 +1,17 @@
 from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.apps.users.model.user.user_model import User
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import \
     AssignmentSubject
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_schema import \
     AssignmentSubjectCreate
 from src.apps.schedules.model.classes.classes_model import Classes
 from src.apps.schedules.model.subjects.subjects_model import Subjects
+from src.apps.users.model.user.user_model import User
 from src.helpers import ValidationHelper
 
 
@@ -47,16 +48,18 @@ class AssignmentsSubjectsService:
             logger.info(f"AssignmentSubject created successfully with ID: {assignment_course.id}")
             return assignment_course
 
-        except HTTPException as e:
-            logger.error(f"HTTP Exception during creation: {e.detail}")
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error creating AssignmentSubject: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create assignment course"
-            )
+        except IntegrityError as e:
+            if 'uq_classes_subjects' in str(e.orig):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+               detail=(
+                            "This class is already assigned to another teacher for the selected subject. "
+                            "Please choose a different combination, as only one teacher can be assigned per class-subject pair."
+                        )
 
+                )
+            else:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     @staticmethod
     async def get_assignment_course_by_id(assignment_id: int, session: AsyncSession):
         """Fetch assignment course by ID with related entities"""
