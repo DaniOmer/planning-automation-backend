@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy import select
@@ -16,6 +18,30 @@ from src.helpers import ValidationHelper
 
 class SessionSubjectService:
     """Service for managing sessions_subjects"""
+
+    VALID_STATUSES = {"Pending", "Confirmed", "Refused"}
+
+    @staticmethod
+    def _validate_status_and_datetimes(data: SessionSubjectCreate | SessionSubjectUpdate):
+        """Valide le statut et la cohérence des datetimes."""
+        # Validation du statut
+        if data.status and data.status not in SessionSubjectService.VALID_STATUSES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Invalid status '{data.status}'. Allowed values are: "
+                    f"{', '.join(SessionSubjectService.VALID_STATUSES)}."
+                )
+            )
+
+        start_dt = data.start_at
+        end_dt = data.end_at
+
+        if start_dt and end_dt and end_dt <= start_dt:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="end_at must be strictly greater than start_at."
+            )
 
     @staticmethod
     async def _load_full_session_subject(session: AsyncSession, session_subject_id: int) -> SessionSubject:
@@ -45,6 +71,8 @@ class SessionSubjectService:
     async def create_session_subject(data: SessionSubjectCreate, session: AsyncSession):
         """Create a new session_subject"""
         try:
+            SessionSubjectService._validate_status_and_datetimes(data)
+
             classroom = None
             if data.classrooms_id:
                 classroom = await ValidationHelper.validate_id(Classroom, data.classrooms_id, session, "Classroom")
@@ -112,18 +140,17 @@ class SessionSubjectService:
     async def update_session_subject(session_subject_id: int, data: SessionSubjectUpdate, session: AsyncSession):
         """Update an existing session_subject"""
         try:
-            await SessionSubjectService.get_session_subject_by_id(session_subject_id, session)
+            session_subject = await SessionSubjectService.get_session_subject_by_id(session_subject_id, session)
 
-            if data.classrooms_id:
+            SessionSubjectService._validate_status_and_datetimes(data)
+
+            if data.classrooms_id is not None:
                 await ValidationHelper.validate_id(Classroom, data.classrooms_id, session, "Classroom")
-            if data.assignments_subjects_id:
+
+            if data.assignments_subjects_id is not None:
                 await ValidationHelper.validate_id(AssignmentSubject, data.assignments_subjects_id, session, "AssignmentSubject")
 
             updated_fields = data.dict(exclude_unset=True)
-            await session.execute(
-                select(SessionSubject).where(SessionSubject.id == session_subject_id)
-            )
-            session_subject = await SessionSubjectService._load_full_session_subject(session, session_subject_id)
 
             for field, value in updated_fields.items():
                 setattr(session_subject, field, value)
@@ -139,6 +166,11 @@ class SessionSubjectService:
             raise e
         except Exception as e:
             logger.error(f"Unexpected error updating SessionSubject: {str(e)}")
+            if "ForeignKeyViolationError" in str(e):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid foreign key value provided. Please ensure that related records exist before updating."
+                )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update session_subject"
