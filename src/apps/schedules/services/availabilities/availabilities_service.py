@@ -52,3 +52,10 @@ async def delete_availability(db: AsyncSession, availability_id: int):
         await db.delete(db_availability)
         await db.commit()
     return db_availability
+
+async def create_availability_from_csv(db: AsyncSession, availability_create: AvailabilityCreate):
+    availability = Availabilities(**availability_create.dict())
+    db.add(availability)
+    await db.commit()
+    await db.refresh(availability)
+    return availability

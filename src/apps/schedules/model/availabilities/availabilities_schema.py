@@ -11,6 +11,7 @@ class AvailabilityBase(BaseSchema):
 
 class AvailabilityCreate(AvailabilityBase):
     users_id: int
+    comment: Optional[str] = None
 
 class AvailabilityUpdate(AvailabilityBase):
     pass
