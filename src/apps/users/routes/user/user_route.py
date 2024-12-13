@@ -1,11 +1,10 @@
-from fastapi import Depends, APIRouter, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.users import *
 from src.config.database_service import get_db
-from src.helpers import TransformHelper
-from src.helpers import SecurityHelper
+from src.helpers import SecurityHelper, TransformHelper
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -58,3 +57,12 @@ async def login(
 @router.get("/admin-dashboard")
 async def admin_dashboard(current_user=Depends(SecurityHelper.require_role("admin"))):
     return {"message": "Welcome to the admin dashboard", "user": current_user}
+
+@router.get("/teachers", response_class=JSONResponse, response_model=list[UserResponse])
+async def get_teachers(
+    # current_user: dict = Depends(SecurityHelper.get_current_user),
+    session: AsyncSession = Depends(get_db)
+):
+    """Récupère la liste de tous les users avec rôle teacher, accessible uniquement par tous les utilisateurs authentifiés."""
+    teachers = await UserService.get_all_teachers(session)
+    return [UserResponse(**TransformHelper.map_to_dict(teacher)) for teacher in teachers]
