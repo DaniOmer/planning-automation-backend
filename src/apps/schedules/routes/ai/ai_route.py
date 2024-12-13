@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from src.config.database_service import get_db
 from src.apps.schedules.services.ai.ai_services import get_all_teachers_and_availabilities
+from src.helpers.security_helper import SecurityHelper
 
 # Charger les variables d'environnement depuis .env
 load_dotenv()
@@ -23,6 +24,7 @@ async def available_teachers_route(
     start_date: datetime,
     end_date: datetime,
     session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     """
     Endpoint pour récupérer les enseignants disponibles pour un sujet donné dans une plage horaire.
