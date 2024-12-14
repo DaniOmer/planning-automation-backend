@@ -6,14 +6,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.apps.schedules.model.classes.classes_model import Classes
 from src.apps.classrooms.model.classroom_model import Classroom
-from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import \
-    AssignmentSubject
-from src.apps.schedules.model.sessions_subjects.sessions_subjects_model import \
-    SessionSubject
+from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import AssignmentSubject
+from src.apps.schedules.services.assignments_subjects.assignments_subjects_services import AssignmentsSubjectsService
+from src.apps.schedules.model.classes.classes_model import Classes
+from src.apps.schedules.model.sessions_subjects.sessions_subjects_model import SessionSubject
 from src.apps.schedules.model.sessions_subjects.sessions_subjects_schema import (
     SessionSubjectCreate, SessionSubjectUpdate)
+from src.apps.schedules.model.subjects.subjects_model import Subjects
+from src.apps.users.model.user.user_model import User
 from src.helpers import ValidationHelper
+from src.libraries import Combinator
 
 
 class SessionSubjectService:
@@ -71,23 +75,164 @@ class SessionSubjectService:
     async def create_session_subject(data: SessionSubjectCreate, session: AsyncSession):
         """Create a new session_subject"""
         try:
-            SessionSubjectService._validate_status_and_datetimes(data)
+            # assignedSubjects = None
+            # classe = await ValidationHelper.validate_id(Classes, data.classes_id, session, "Classes")
+            # if classe:
+            #     assignedSubjects = AssignmentsSubjectsService.get_assignment_course_by_id(classe.id)
+            # if assignedSubjects:
+            #     pass
 
-            classroom = None
-            if data.classrooms_id:
-                classroom = await ValidationHelper.validate_id(Classroom, data.classrooms_id, session, "Classroom")
-            assignment = await ValidationHelper.validate_id(AssignmentSubject, data.assignments_subjects_id, session, "AssignmentSubject")
+            # classroom = None
+            # if data.classrooms_id:
+            #     classroom = await ValidationHelper.validate_id(Classroom, data.classrooms_id, session, "Classroom")
+            # assignment = await ValidationHelper.validate_id(AssignmentSubject, data.assignments_subjects_id, session, "AssignmentSubject")
 
-            session_subject = SessionSubject(**data.dict())
-            session_subject.classroom_info = classroom
-            session_subject.assignment_info = assignment
+            # session_subject = SessionSubject(**data.dict())
+            # session_subject.classroom_info = classroom
+            # session_subject.assignment_info = assignment
 
-            session.add(session_subject)
-            await session.commit()
-            await session.refresh(session_subject)
-            logger.info(f"SessionSubject created successfully with ID: {session_subject.id}")
+            # session.add(session_subject)
+            # await session.commit()
+            # await session.refresh(session_subject)
+            # logger.info(f"SessionSubject created successfully with ID: {session_subject.id}")
 
-            return await SessionSubjectService._load_full_session_subject(session, session_subject.id)
+            # return await SessionSubjectService._load_full_session_subject(session, session_subject.id)
+            query = (
+                select(SessionSubject)
+                .options(
+                    selectinload(SessionSubject.classroom_info),
+                    selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
+                    selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
+                    selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+                )
+            )
+            result = await session.execute(query)
+
+            calendar = [
+                {"date": "2024-12-01", "type": "course"},
+                {"date": "2024-12-02", "type": "exam"},
+                {"date": "2024-12-03", "type": "course"},
+                {"date": "2024-12-04", "type": "course"},
+                {"date": "2024-12-05", "type": "course"},
+                {"date": "2024-12-06", "type": "exam"},
+                {"date": "2024-12-07", "type": "course"},
+                {"date": "2024-12-08", "type": "course"},
+            ]
+            courses = [
+                {
+                    "id": 1,
+                    "name": "Mathématiques",
+                    "hourly_volume": 720,
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "teacher": {
+                        "name": "Prof A",
+                        "availability": {
+                            "2024-12-01": [(540, 780), (840, 1080)],
+                            "2024-12-03": [(540, 780), (840, 1080)]
+                        }
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "Physique",
+                    "hourly_volume": 1200,
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "teacher": {
+                        "name": "Prof B",
+                        "availability": {
+                            "2024-12-01": [(840, 1080)],
+                            "2024-12-03": [(540, 780), (840, 1080)],
+                            "2024-12-04": [(540, 780), (840, 1080)],
+                            "2024-12-05": [(540, 780), (840, 1080)]
+                        }
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "Chimie",
+                    "hourly_volume": 960,
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "teacher": {
+                        "name": "Prof C",
+                        "availability": {
+                            "2024-12-01": [(840, 1080)],
+                            "2024-12-03": [(540, 780), (840, 1080)],
+                            "2024-12-04": [(540, 780), (840, 1080)]
+                        }
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "Français",
+                    "hourly_volume": 1080,
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "teacher": {
+                        "name": "Prof D",
+                        "availability": {
+                            "2024-12-01": [(540, 780), (840, 1080)],
+                            "2024-12-03": [(540, 780), (840, 1080)],
+                            "2024-12-04": [(540, 780), (840, 1080)]
+                        }
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "Anglais",
+                    "hourly_volume": 1140,
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "teacher": {
+                        "name": "Prof E",
+                        "availability": {
+                            "2024-12-01": [(540, 780), (840, 1080)],
+                            "2024-12-03": [(540, 780), (840, 1080)],
+                            "2024-12-04": [(540, 780), (840, 1080)],
+                            "2024-12-05": [(540, 780), (840, 1080)],
+                            "2024-12-06": [(540, 780), (840, 1080)],
+                        }
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "Python",
+                    "hourly_volume": 720,
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "teacher": {
+                        "name": "Prof F",
+                        "availability": {
+                            "2024-12-01": [(540, 780), (840, 1080)],
+                            "2024-12-03": [(540, 780), (840, 1080)]
+                        }
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "Js",
+                    "hourly_volume": 720,
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "teacher": {
+                        "name": "Prof G",
+                        "availability": {
+                            "2024-12-01": [(540, 780), (840, 1080)],
+                            "2024-12-03": [(540, 780), (840, 1080)]
+                        }
+                    }
+                },
+            ]
+            session_duration = 240
+            days_time_slot = (480, 1200)
+            nb_rooms= 5
+
+
+            combinator = Combinator(calendar, courses, session_duration, days_time_slot, nb_rooms)
+            planned_sessions = combinator.solve()
+            return planned_sessions
 
         except HTTPException as e:
             logger.error(f"HTTP Exception during creation: {e.detail}")
@@ -194,3 +339,66 @@ class SessionSubjectService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete session_subject"
             )
+    
+    @staticmethod
+    async def get_teacher_sessions(teacher_id: int, session: AsyncSession):
+        teacher_user = await ValidationHelper.validate_id(User, teacher_id, session, "User")
+
+        query = (
+            select(SessionSubject)
+            .options(
+                selectinload(SessionSubject.classroom_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+            )
+            .join(SessionSubject.assignment_info)
+            .where(AssignmentSubject.users_id == teacher_id)
+        )
+
+        result = await session.execute(query)
+        sessions = result.scalars().all()
+        logger.info(f"Fetched {len(sessions)} SessionSubjects for teacher ID: {teacher_id}")
+        return sessions
+
+    @staticmethod
+    async def get_class_sessions(class_id: int, session: AsyncSession):
+        await ValidationHelper.validate_id(Classes, class_id, session, "Classes")
+
+        query = (
+            select(SessionSubject)
+            .options(
+                selectinload(SessionSubject.classroom_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+            )
+            .join(SessionSubject.assignment_info)
+            .where(AssignmentSubject.classes_id == class_id)
+        )
+
+        result = await session.execute(query)
+        sessions = result.scalars().all()
+        logger.info(f"Fetched {len(sessions)} SessionSubjects for class ID: {class_id}")
+        return sessions
+
+    @staticmethod
+    async def get_subject_sessions(subject_id: int, session: AsyncSession):
+        await ValidationHelper.validate_id(Subjects, subject_id, session, "Subject")
+
+        query = (
+            select(SessionSubject)
+            .options(
+                selectinload(SessionSubject.classroom_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
+                selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+            )
+            .join(SessionSubject.assignment_info)
+            .where(AssignmentSubject.subjects_id == subject_id)
+        )
+
+        result = await session.execute(query)
+        sessions = result.scalars().all()
+        logger.info(f"Fetched {len(sessions)} SessionSubjects for subject ID: {subject_id}")
+        return sessions

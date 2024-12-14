@@ -8,7 +8,7 @@ from src.apps.schedules import (AssignmentSubjectsRouter, AvailabilitiesRouter,
                                 EducationalCoursesRouter,
                                 SessionSubjectsRouter, SubjectsRouter,
                                 YearsGroupsEducationalCoursesRouter,
-                                YearsGroupsRouter)
+                                YearsGroupsRouter, AiRouter)
 from src.apps.users import InvitationRouter, UserRouter
 
 app = FastAPI(
@@ -29,7 +29,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=ALLOWED_METHODS,
     allow_headers=ALLOWED_HEADERS,
@@ -48,3 +48,4 @@ app.include_router(AvailabilitiesRouter)
 app.include_router(SubjectsRouter)
 app.include_router(AssignmentSubjectsRouter)
 app.include_router(SessionSubjectsRouter)
+app.include_router(AiRouter)

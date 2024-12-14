@@ -45,12 +45,7 @@ class AssignmentSubjectInfo(BaseModel):
 
    
 class SessionSubjectCreate(BaseModel):
-    classrooms_id: Optional[int] = Field(default=None, description="ID of the classroom (nullable)")
-    assignments_subjects_id: int = Field(..., description="ID of the assigned subject")
-    comment: Optional[str] = Field(default=None, description="Optional comment for the session")
-    status: str = Field(..., description="Status of the session")
-    start_at: datetime = Field(..., description="Start date and time of the session")
-    end_at: datetime = Field(..., description="End date and time of the session")
+    classes_id: int = Field(..., description="ID of the classe")
 
 
 class SessionSubjectUpdate(BaseModel):

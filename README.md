@@ -12,7 +12,7 @@ planify-backend/
 │   │   │   ├── routes/      # Routes
 │   │   │   │   └── user_route.py
 │   │   │   ├── domain/      # Business logic for users
-│   │   │   │   └── user_service.ts
+│   │   │   │   └── user_service.py
 │   │   │   ├── data-access/ # Data access (models, pydantic schema)
 │   │   │       ├── user_model.py
 │   │   │       └── user_schema.py
