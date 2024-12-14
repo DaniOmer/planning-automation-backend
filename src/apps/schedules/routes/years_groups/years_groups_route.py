@@ -1,17 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.apps.schedules.model.years_groups.years_groups_model import \
+    YearsGroups
+from src.apps.schedules.model.years_groups.years_groups_schema import (
+    YearsGroupCreate, YearsGroupResponse)
+from src.apps.schedules.services.years_groups.years_groups_service import \
+    YearsGroupService
 from src.config.database_service import get_db
-from src.apps.schedules.model.years_groups.years_groups_model import YearsGroups
-from src.apps.schedules.model.years_groups.years_groups_schema import YearsGroupCreate, YearsGroupResponse
-from src.apps.schedules.services.years_groups.years_groups_service import YearsGroupService
 from src.helpers import TransformHelper
+from src.helpers.security_helper import SecurityHelper
 
 router = APIRouter(prefix="/years_groups")
 
 @router.post("/create", response_model=YearsGroupResponse, tags=["YearsGroupResponse"])
 async def create_years_group(
     group_data: YearsGroupCreate, 
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     try:
         created_group = await YearsGroupService.create_years_group(group_data, session)
@@ -23,7 +29,8 @@ async def create_years_group(
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 @router.get("/", response_model=list[YearsGroupResponse])
-async def get_years_groups(session: AsyncSession = Depends(get_db)):
+async def get_years_groups(session: AsyncSession = Depends(get_db),
+                           current_user=Depends(SecurityHelper.get_current_user)):
     try:
         result = await YearsGroupService.get_all_years_groups(session)
         return [YearsGroupResponse(**TransformHelper.map_to_dict(item)) for item in result]
@@ -41,7 +48,8 @@ async def get_years_group(group_id: int, session: AsyncSession = Depends(get_db)
 async def update_years_group(
     group_id: int, 
     group_data: YearsGroupCreate, 
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     updated_group = await YearsGroupService.update_years_group(group_id, group_data, session)
     if not updated_group:
@@ -49,7 +57,11 @@ async def update_years_group(
     return YearsGroupResponse(**TransformHelper.map_to_dict(updated_group))
 
 @router.delete("/{group_id}", response_model=dict)
-async def delete_years_group(group_id: int, session: AsyncSession = Depends(get_db)):
+async def delete_years_group(
+    group_id: int, 
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
+):
     success = await YearsGroupService.delete_years_group(group_id, session)
     if not success:
         raise HTTPException(status_code=404, detail="YearsGroup not found")

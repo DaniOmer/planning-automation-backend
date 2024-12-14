@@ -1,13 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from fastapi.responses import JSONResponse
 
+from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import \
+    YearsGroupsEducationalCourses
+from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_schema import \
+    YearsGroupsEducationalCoursesSchema
+from src.apps.schedules.services.years_groups_educational_courses.years_groups_educational_courses_service import \
+    YearsGroupsEducationalCoursesService
 from src.config.database_service import get_db
 from src.helpers import TransformHelper
-from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import YearsGroupsEducationalCourses
-from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_schema import YearsGroupsEducationalCoursesSchema
-from src.apps.schedules.services.years_groups_educational_courses.years_groups_educational_courses_service import YearsGroupsEducationalCoursesService
+from src.helpers.security_helper import SecurityHelper
 
 router = APIRouter(prefix="/years-groups-educational-courses", tags=["YearsGroupsEducationalCourses"])
 
@@ -16,6 +20,7 @@ router = APIRouter(prefix="/years-groups-educational-courses", tags=["YearsGroup
 async def create_years_groups_educational_course(
     data: YearsGroupsEducationalCoursesSchema,
     session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     try:
         entry = await YearsGroupsEducationalCoursesService.create_entry(data, session)
@@ -30,6 +35,7 @@ async def create_years_groups_educational_course(
 @router.get("/", response_class=JSONResponse)
 async def get_all_years_groups_educational_courses(
     session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     try:
         entries = await YearsGroupsEducationalCoursesService.get_all_entries(session)
@@ -45,6 +51,7 @@ async def get_years_groups_educational_course(
     years_group_id: int,
     educational_courses_id: int,
     session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     entry = await YearsGroupsEducationalCoursesService.get_entry_by_ids(
         years_group_id, educational_courses_id, session
@@ -60,6 +67,7 @@ async def update_years_groups_educational_course(
     educational_courses_id: int,
     data: YearsGroupsEducationalCoursesSchema,
     session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     entry = await YearsGroupsEducationalCoursesService.update_entry(
         years_group_id, educational_courses_id, data, session
@@ -74,6 +82,7 @@ async def delete_years_groups_educational_course(
     years_group_id: int,
     educational_courses_id: int,
     session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     success = await YearsGroupsEducationalCoursesService.delete_entry(
         years_group_id, educational_courses_id, session
