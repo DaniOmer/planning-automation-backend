@@ -1,20 +1,20 @@
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import List
 from src.models import BaseSchema
 
-class AvailabilityBase(BaseSchema):
-    comment: Optional[str]
+
+class Slot(BaseSchema):
     start_at: datetime
     end_at: datetime
-    is_recurring: Optional[bool] = False
 
-class AvailabilityCreate(AvailabilityBase):
-    users_id: int
-    comment: Optional[str] = None
+class AvailabilityBase(BaseSchema):
+    slots: List[Slot]
 
-class AvailabilityUpdate(AvailabilityBase):
+class AvailabilityCreateSchema(AvailabilityBase):
     pass
 
-class AvailabilityResponse(AvailabilityBase):
+class AvailabilityUpdateSchema(AvailabilityBase):
+    pass
+
+class AvailabilityResponseSchema(AvailabilityBase):
     users_id: int

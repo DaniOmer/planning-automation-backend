@@ -5,5 +5,4 @@ class EducationalCourses(Base):
     __tablename__ = 'educational_courses'
 
     id = Column(Integer, primary_key=True)
-    description = Column(String(255), nullable=False)
-    day = Column(Date, nullable=False)
+    day = Column(Date, nullable=False, unique=True)

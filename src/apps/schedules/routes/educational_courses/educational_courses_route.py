@@ -29,7 +29,7 @@ async def create_educational_course(
     current_user=Depends(SecurityHelper.require_role("admin"))
 ):
     try:
-        created_course = await EducationalCourseService.create_educational_course(course_data, session)
+        created_course = await EducationalCourseService.get_or_create_educational_course(course_data, session)
         course_dict = TransformHelper.map_to_dict(created_course)
         return EducationalCourseResponse(**course_dict)
     except ValueError as e:

@@ -1,61 +1,110 @@
+import json
+from datetime import datetime
+from collections import defaultdict
 from sqlalchemy.future import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.apps.schedules.model.availabilities.availabilities_model import Availabilities
-from src.apps.schedules.model.availabilities.availabilities_schema import AvailabilityCreate, AvailabilityUpdate
-from src.apps.users.model.user.user_model import User
 
-async def get_availabilities(db: AsyncSession):
-    result = await db.execute(select(Availabilities))
-    return result.scalars().all()
+class AvailabilityService:
+    """Service for operations related to user availabilities"""
 
-async def get_availabilities_by_users_id(db: AsyncSession, users_id: int):
-    result = await db.execute(select(Availabilities).where(Availabilities.users_id == users_id))
-    return result.scalars().all()
+    @staticmethod
+    async def get_availabilities_by_users_id(session: AsyncSession, user_id):
+        c_user_id = int(user_id)
+        query = select(Availabilities).where(Availabilities.users_id == c_user_id)
+        result = await session.execute(query)
+        return result.scalars().all()
 
-async def verify_user_exists(db: AsyncSession, user_id: int):
-    result = await db.execute(select(User).where(User.id == user_id))
-    if not result.scalar():
-        raise ValueError(f"User with id {user_id} does not exist")
+    @staticmethod
+    async def create_availability(session: AsyncSession, slots: list, user_id):
+        try:
+            c_user_id = int(user_id)
+            c_slots = AvailabilityService.slots_datetime_to_str(slots)
+            availability = Availabilities(
+                slots=json.dumps(c_slots),
+                users_id=c_user_id
+            )
+            session.add(availability)
+            await session.commit()
+            await session.refresh(availability)
 
-async def create_availability(db: AsyncSession, availability: AvailabilityCreate):
-    await verify_user_exists(db, availability.users_id)
+            if availability.id is None:
+                raise ValueError("Failed to create availability")
 
-    db_availability = Availabilities(**availability.dict())
-    db.add(db_availability)
-    await db.commit()
-    await db.refresh(db_availability)
-    return db_availability
+            return availability
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise ValueError(f"An error occurred while creating availability: {e}")
 
+    @staticmethod
+    async def get_availability_by_id(
+        session: AsyncSession, 
+        availability_id: int
+    ):
+        try:
+            query = select(Availabilities).where(Availabilities.id == availability_id)
+            result = await session.execute(query)
+            availability =  result.scalar_one_or_none()
+            if not availability:
+                raise ValueError(f"Availability with id {availability_id} does not exist")
+            return availability
+        except SQLAlchemyError as e:
+            raise ValueError(f"An error occurred while retrieving availability: {e}")
 
-async def get_availability_by_id(db: AsyncSession, availability_id: int):
-    result = await db.execute(select(Availabilities).where(Availabilities.id == availability_id))
-    return result.scalars().first()
+    @staticmethod
+    async def update_availability(
+        session: AsyncSession, 
+        availability_id: int, 
+        slots: list,
+        user_id
+    ):
+       try:
+            c_user_id = int(user_id)
+            c_slots = AvailabilityService.slots_datetime_to_str(slots)
+            availability = await AvailabilityService.get_availability_by_id(session, availability_id)
+            if not availability:
+                raise ValueError(f"Availability with id {availability_id} does not exist")
+            if availability.users_id != c_user_id:
+                raise ValueError("User does not have permission to update this availability")
+            
+            availability.slots = json.dumps(c_slots)
+            await session.commit()
+            await session.refresh(availability)
+            return availability
+       except SQLAlchemyError as e:
+            await session.rollback()
+            raise ValueError(f"An error occurred while updating availability: {e}")
 
-async def update_availability(db: AsyncSession, availability_id: int, availability: AvailabilityUpdate):
-    db_availability = await get_availability_by_id(db, availability_id)
-    if not db_availability:
-        return None
-    
-    if availability.users_id is not None and availability.users_id != db_availability.users_id:
-        await verify_user_exists(db, availability.users_id)
+    @staticmethod
+    async def delete_availability(session: AsyncSession, availability_id: int):
+        try:
+            availability = await AvailabilityService.get_availability_by_id(session, availability_id)
+            if not availability:
+                raise ValueError(f"Availability with id {availability_id} does not exist")
+            await session.delete(availability)
+            await session.commit()
+            return availability
+        except SQLAlchemyError as e:
+            await session.rollback()
+            raise ValueError(f"An error occurred while deleting availability: {e}")
 
-    for key, value in availability.dict(exclude_unset=True).items():
-        setattr(db_availability, key, value)
-    await db.commit()
-    await db.refresh(db_availability)
-    return db_availability
+    @staticmethod
+    def slots_datetime_to_str(slots):
+        for slot in slots:
+            if isinstance(slot['start_at'], datetime):
+                slot['start_at'] = slot['start_at'].isoformat()
+            if isinstance(slot['end_at'], datetime):
+                slot['end_at'] = slot['end_at'].isoformat()
+        return slots
 
+    @staticmethod
+    def transform_slots(slots):
+        t_slots = defaultdict(list)
 
-async def delete_availability(db: AsyncSession, availability_id: int):
-    db_availability = await get_availability_by_id(db, availability_id)
-    if db_availability:
-        await db.delete(db_availability)
-        await db.commit()
-    return db_availability
-
-async def create_availability_from_csv(db: AsyncSession, availability_create: AvailabilityCreate):
-    availability = Availabilities(**availability_create.dict())
-    db.add(availability)
-    await db.commit()
-    await db.refresh(availability)
-    return availability
+        for slot in slots:
+            date_str = slot['start_at'].strftime('%Y-%m-%d')
+            start_minutes = slot['start_at'].hour * 60 + slot['start_at'].minute
+            end_minutes = slot['end_at'].hour * 60 + slot['end_at'].minute
+            t_slots[date_str].append((start_minutes, end_minutes))
+        return t_slots

@@ -155,34 +155,25 @@ class AssignmentsSubjectsService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete assignment course"
             )
-            
+    
     @staticmethod
-    async def get_assignments_by_teacher(teacher_id: int, session: AsyncSession):
-        """Fetch all assignment subjects for a given teacher by user_id."""
+    async def get_assigned_courses_by_class_id(class_id: int, session: AsyncSession):
+        """Fetch assigned courses by class ID"""
         try:
             query = select(AssignmentSubject).options(
                 joinedload(AssignmentSubject.class_info),
                 joinedload(AssignmentSubject.subject_info),
                 joinedload(AssignmentSubject.user_info)
-            ).where(AssignmentSubject.users_id == teacher_id)
+            ).where(AssignmentSubject.classes_id == class_id)
 
             result = await session.execute(query)
             assignments = result.scalars().all()
-
-            if not assignments:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No assignments found for teacher with ID {teacher_id}."
-                )
-
-            logger.info(f"Fetched {len(assignments)} assignments for teacher ID: {teacher_id}")
+            logger.info(f"Fetched {len(assignments)} AssignmentSubjects for class ID: {class_id}")
             return assignments
-        except HTTPException as e:
-            raise e
+        
         except Exception as e:
-            logger.error(f"Unexpected error fetching assignments for teacher ID {teacher_id}: {str(e)}")
+            logger.error(f"Unexpected error fetching AssignmentSubjects for class ID: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to fetch assignments for the specified teacher."
+                detail="Failed to fetch assignment courses for class"
             )
-

@@ -10,7 +10,8 @@ from src.helpers.security_helper import SecurityHelper
 
 router = APIRouter(prefix="/sessions-subjects", tags=["SessionsSubjects"])
 
-@router.post("/", response_model=SessionSubjectResponse)
+# @router.post("/", response_model=SessionSubjectResponse)
+@router.post("/")
 async def create_session_subject(
     data: SessionSubjectCreate,
     session: AsyncSession = Depends(get_db),
