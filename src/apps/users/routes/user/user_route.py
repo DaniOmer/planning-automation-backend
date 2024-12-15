@@ -61,8 +61,36 @@ async def admin_dashboard(current_user=Depends(SecurityHelper.require_role("admi
 @router.get("/teachers", response_class=JSONResponse, response_model=list[UserResponse])
 async def get_teachers(
     # current_user: dict = Depends(SecurityHelper.get_current_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.get_current_user)
 ):
     """Récupère la liste de tous les users avec rôle teacher, accessible uniquement par tous les utilisateurs authentifiés."""
     teachers = await UserService.get_all_teachers(session)
     return [UserResponse(**TransformHelper.map_to_dict(teacher)) for teacher in teachers]
+
+@router.delete("/teachers/{teacher_id}", response_class=JSONResponse)
+async def delete_teacher(
+    teacher_id: int,
+    session: AsyncSession = Depends(get_db),
+    current_user=Depends(SecurityHelper.require_role("admin")),
+):
+    """Supprime un teacher, accessible uniquement par l'administrateur."""
+    try:
+        teacher = await UserService.get_user_by_id(teacher_id, session)
+        if teacher.role != RoleEnum.teacher:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="The specified user is not a teacher."
+            )
+        
+        await UserService.delete_user(teacher_id, session)
+        return {"detail": f"Teacher with ID {teacher_id} successfully deleted."}
+    except HTTPException as e:
+        logger.error(f"Error deleting teacher: {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Unexpected error deleting teacher: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Failed to delete teacher."
+        )

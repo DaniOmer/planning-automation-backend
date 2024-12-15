@@ -4,6 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import \
+    AssignmentSubject
 from src.apps.users import *
 from src.apps.users import User
 from src.helpers import SecurityHelper
@@ -73,3 +75,48 @@ class UserService:
         result = await session.execute(query)
         teachers = result.scalars().all()
         return teachers
+    
+    @staticmethod
+    async def get_user_by_id(user_id: int, session: AsyncSession) -> User:
+        query = select(User).where(User.id == user_id)
+        result = await session.execute(query)
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"User with ID {user_id} not found."
+            )
+        return user
+
+            
+    @staticmethod
+    async def delete_user(user_id: int, session: AsyncSession):
+        """Supprime un utilisateur après avoir vérifié qu'il n'est pas assigné."""
+        user = await UserService.get_user_by_id(user_id, session)
+        try:
+            if user.role == RoleEnum.teacher:
+                query = select(AssignmentSubject).where(AssignmentSubject.users_id == user_id)
+                result = await session.execute(query)
+                assignments = result.scalars().all()
+
+                if assignments:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Cannot delete teacher with ID {user_id} because they are assigned to a subject."
+                    )
+            
+            await session.delete(user)
+            await session.commit()
+            logger.info(f"User with ID {user_id} successfully deleted.")
+        except HTTPException as e:
+            logger.error(f"HTTP Exception during deletion: {e.detail}")
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error deleting user: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete user."
+            )
+
+
+
