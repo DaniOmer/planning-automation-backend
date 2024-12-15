@@ -26,44 +26,6 @@ async def create_educational_course(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
-    
-@router.post("/import/{years_group_id}", response_model=dict)
-async def import_educational_courses(
-    years_group_id: int,
-    file: UploadFile = File(...),
-    session: AsyncSession = Depends(get_db)
-):
-    result = await session.execute(select(YearsGroups).filter(YearsGroups.id == years_group_id))
-    years_group = result.scalar_one_or_none()
-    if not years_group:
-        raise HTTPException(status_code=404, detail="Years group not found")
-
-    required_columns = ["id", "description", "day", "day_type"]
-
-    async def link_to_years_groups(course, row, session):
-        years_groups_course_data = {
-            "educational_courses_id": course.id,
-            "years_group_id": years_group_id,
-            "day_type": row.get("day_type")
-        }
-        await session.execute(
-            insert(YearsGroupsEducationalCourses).values(years_groups_course_data)
-        )
-        await session.commit()
-
-    try:
-        return await import_csv(
-            file=file,
-            session=session,
-            entity_class=EducationalCourseCreate,
-            create_service=EducationalCourseService.create_educational_course,
-            required_columns=required_columns,
-            post_create_action=link_to_years_groups,
-        )
-    except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"Missing required column: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process CSV: {str(e)}")
 
 @router.get("/", response_model=list[EducationalCourseResponse])
 async def get_educational_courses(session: AsyncSession = Depends(get_db)):

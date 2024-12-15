@@ -84,8 +84,7 @@ async def delete_years_groups_educational_course(
         raise HTTPException(status_code=404, detail="Entry not found")
     return JSONResponse(content={"detail": "Entry successfully deleted"})
 
-
-@router.post("/upload-csv")
+@router.post("/upload-csv/{years_group_id}")
 async def upload_csv(
     years_group_id: int,
     file: UploadFile = File(...),
@@ -96,7 +95,6 @@ async def upload_csv(
         file_content = await file.read()
         created_records = await YearsGroupsEducationalCoursesService.upload_csv(years_group_id, file_content, session)
         if len(created_records):
-            await session.commit()
             return {"details": f"{len(created_records)} records created successfully."}
         else:
             return {"details": "No records to create. All records from the CSV file already exist."}

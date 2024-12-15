@@ -10,7 +10,7 @@ class Combinator:
 
         self.model = cp_model.CpModel()
         self.start_hour, self.end_hour = days_time_slot
-        self.course_days = [i for i, day in enumerate(calendar) if day['type'] == 'course']
+        self.course_days = [i for i, day in enumerate(calendar) if day['type'] == 'cours']
 
     def create_sessions(self):
         """Creates sessions from courses."""
@@ -50,9 +50,8 @@ class Combinator:
 
             for d in range(len(self.course_days)):
                 day_index = self.course_days[d]
-                day_date = self.calendar[day_index]['date']
+                day_date = str(self.calendar[day_index]['date'])
                 intervals = teacher_availability.get(day_date, [])
-
                 for h in range(self.start_hour, self.end_hour):
                     var = x[session][(d, h)]
                     if h + self.session_duration > self.end_hour:
@@ -126,9 +125,8 @@ class Combinator:
                             })
             return {
                 "status": solver.StatusName(status),
-                "schedule": schedule,
+                "sessions": schedule,
                 "total_cost": solver.ObjectiveValue(),
-                "num_solutions": solver.NumSolutions() - 1,
             }
         else:
             return {"status": solver.StatusName(status)}

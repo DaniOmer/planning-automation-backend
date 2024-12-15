@@ -155,3 +155,25 @@ class AssignmentsSubjectsService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete assignment course"
             )
+    
+    @staticmethod
+    async def get_assigned_courses_by_class_id(class_id: int, session: AsyncSession):
+        """Fetch assigned courses by class ID"""
+        try:
+            query = select(AssignmentSubject).options(
+                joinedload(AssignmentSubject.class_info),
+                joinedload(AssignmentSubject.subject_info),
+                joinedload(AssignmentSubject.user_info)
+            ).where(AssignmentSubject.classes_id == class_id)
+
+            result = await session.execute(query)
+            assignments = result.scalars().all()
+            logger.info(f"Fetched {len(assignments)} AssignmentSubjects for class ID: {class_id}")
+            return assignments
+        
+        except Exception as e:
+            logger.error(f"Unexpected error fetching AssignmentSubjects for class ID: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to fetch assignment courses for class"
+            )

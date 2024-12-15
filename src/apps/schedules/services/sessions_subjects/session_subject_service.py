@@ -1,17 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
-from sqlalchemy.inspection import inspect
 
 from src.apps.schedules.model.classes.classes_model import Classes
 from src.apps.classrooms.model.classroom_model import Classroom
 from src.apps.schedules.model.assignments_subjects.assignments_subjects_model import AssignmentSubject
 from src.apps.schedules.services.assignments_subjects.assignments_subjects_services import AssignmentsSubjectsService
 from src.apps.schedules.model.classes.classes_model import Classes
+from src.apps.schedules.services.classes.classes_service import ClassService
 from src.apps.schedules.model.sessions_subjects.sessions_subjects_model import SessionSubject
 from src.apps.schedules.model.sessions_subjects.sessions_subjects_schema import (
     SessionSubjectCreate, SessionSubjectUpdate)
@@ -19,7 +19,8 @@ from src.apps.schedules.model.subjects.subjects_model import Subjects
 from src.apps.users.model.user.user_model import User
 from src.helpers import ValidationHelper
 from src.libraries import Combinator
-
+from src.apps.schedules.services.years_groups_educational_courses.years_groups_educational_courses_service import YearsGroupsEducationalCoursesService
+from src.apps.schedules.model.sessions_subjects.sessions_subjects_schema  import SessionStatus
 
 class SessionSubjectService:
     """Service for managing sessions_subjects"""
@@ -76,7 +77,11 @@ class SessionSubjectService:
     async def create_session_subject(data: SessionSubjectCreate, session: AsyncSession):
         """Create a new session_subject"""
         try:
-            query = (
+            existing_class = await ClassService.get_class_by_id(data.classes_id, session)
+            if not existing_class:
+                raise ValueError(f"Class with ID {data.classes_id} not found")
+            
+            as_query = (
                 select(AssignmentSubject)
                 .options(
                     joinedload(AssignmentSubject.class_info),
@@ -85,141 +90,43 @@ class SessionSubjectService:
                 )
                 .where(AssignmentSubject.classes_id == data.classes_id)
             )
-            as_result = await session.execute(query)
+            as_result = await session.execute(as_query)
             assignedSubjects = as_result.scalars().all()
-
             if not assignedSubjects:
                 raise ValueError(f"No assigned subjects found for class with ID {data.classes_id}")
             
-            courses =  SessionSubjectService._cast_to_combinator_struct(assignedSubjects)
-        
-            calendar = [
-                {"date": "2024-12-01", "type": "course"},
-                {"date": "2024-12-02", "type": "exam"},
-                {"date": "2024-12-03", "type": "course"},
-                {"date": "2024-12-04", "type": "course"},
-                {"date": "2024-12-05", "type": "course"},
-                {"date": "2024-12-06", "type": "exam"},
-                {"date": "2024-12-07", "type": "course"},
-                {"date": "2024-12-08", "type": "course"},
-            ]
-            # courses = [
-            #     {
-            #         "id": 1,
-            #         "name": "Mathématiques",
-            #         "hourly_volume": 720,
-            #         "start_date": "2024-01-01",
-            #         "end_date": "2024-06-30",
-            #         "teacher": {
-            #             "name": "Prof A",
-            #             "availability": {
-            #                 "2024-12-01": [(540, 780), (840, 1080)],
-            #                 "2024-12-03": [(540, 780), (840, 1080)]
-            #             }
-            #         }
-            #     },
-            #     {
-            #         "id": 2,
-            #         "name": "Physique",
-            #         "hourly_volume": 1200,
-            #         "start_date": "2024-01-01",
-            #         "end_date": "2024-06-30",
-            #         "teacher": {
-            #             "name": "Prof B",
-            #             "availability": {
-            #                 "2024-12-01": [(840, 1080)],
-            #                 "2024-12-03": [(540, 780), (840, 1080)],
-            #                 "2024-12-04": [(540, 780), (840, 1080)],
-            #                 "2024-12-05": [(540, 780), (840, 1080)]
-            #             }
-            #         }
-            #     },
-            #     {
-            #         "id": 3,
-            #         "name": "Chimie",
-            #         "hourly_volume": 960,
-            #         "start_date": "2024-01-01",
-            #         "end_date": "2024-06-30",
-            #         "teacher": {
-            #             "name": "Prof C",
-            #             "availability": {
-            #                 "2024-12-01": [(840, 1080)],
-            #                 "2024-12-03": [(540, 780), (840, 1080)],
-            #                 "2024-12-04": [(540, 780), (840, 1080)]
-            #             }
-            #         }
-            #     },
-            #     {
-            #         "id": 4,
-            #         "name": "Français",
-            #         "hourly_volume": 1080,
-            #         "start_date": "2024-01-01",
-            #         "end_date": "2024-06-30",
-            #         "teacher": {
-            #             "name": "Prof D",
-            #             "availability": {
-            #                 "2024-12-01": [(540, 780), (840, 1080)],
-            #                 "2024-12-03": [(540, 780), (840, 1080)],
-            #                 "2024-12-04": [(540, 780), (840, 1080)]
-            #             }
-            #         }
-            #     },
-            #     {
-            #         "id": 5,
-            #         "name": "Anglais",
-            #         "hourly_volume": 1140,
-            #         "start_date": "2024-01-01",
-            #         "end_date": "2024-06-30",
-            #         "teacher": {
-            #             "name": "Prof E",
-            #             "availability": {
-            #                 "2024-12-01": [(540, 780), (840, 1080)],
-            #                 "2024-12-03": [(540, 780), (840, 1080)],
-            #                 "2024-12-04": [(540, 780), (840, 1080)],
-            #                 "2024-12-05": [(540, 780), (840, 1080)],
-            #                 "2024-12-06": [(540, 780), (840, 1080)],
-            #             }
-            #         }
-            #     },
-            #     {
-            #         "id": 6,
-            #         "name": "Python",
-            #         "hourly_volume": 720,
-            #         "start_date": "2024-01-01",
-            #         "end_date": "2024-06-30",
-            #         "teacher": {
-            #             "name": "Prof F",
-            #             "availability": {
-            #                 "2024-12-01": [(540, 780), (840, 1080)],
-            #                 "2024-12-03": [(540, 780), (840, 1080)]
-            #             }
-            #         }
-            #     },
-            #     {
-            #         "id": 7,
-            #         "name": "Js",
-            #         "hourly_volume": 720,
-            #         "start_date": "2024-01-01",
-            #         "end_date": "2024-06-30",
-            #         "teacher": {
-            #             "name": "Prof G",
-            #             "availability": {
-            #                 "2024-12-01": [(540, 780), (840, 1080)],
-            #                 "2024-12-03": [(540, 780), (840, 1080)]
-            #             }
-            #         }
-            #     },
-            # ]
+            assignedSubjects =  SessionSubjectService._cast_to_combinator_struct(assignedSubjects)
+            calendar = await YearsGroupsEducationalCoursesService.get_year_group_educational_class_by_year_group(
+                existing_class.years_group_id, session
+            )
+            t_calendar = SessionSubjectService._transform_calendar(calendar)
             session_duration = 240
             days_time_slot = (480, 1200)
             nb_rooms= 5
 
-
-            combinator = Combinator(calendar, courses, session_duration, days_time_slot, nb_rooms)
+            combinator = Combinator(t_calendar, assignedSubjects, session_duration, days_time_slot, nb_rooms)
             planned_sessions = combinator.solve()
-            return planned_sessions
+            if planned_sessions.get("status") == "INFEASIBLE":
+                raise HTTPException(status_code=400, detail="No feasible schedule found")
             
-
+            session_subjects = []
+            for session_data in planned_sessions.get("sessions"):
+                start_at = SessionSubjectService.generate_timestamp(session_data['day'], session_data['start_time'])
+                end_at = SessionSubjectService.generate_timestamp(session_data['day'], session_data['end_time'])
+                session_subject = SessionSubject(
+                    assignments_subjects_id=session_data['course_id'],
+                    start_at=start_at,
+                    end_at=end_at,
+                    status=SessionStatus.pending,
+                )
+                session.add(session_subject)
+                await session.commit()
+                session_subjects.append(session_subject)
+                
+            return session_subjects
+        except ValueError as e:
+            logger.error(f"Validation error: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Validation error: {str(e)}")
         except HTTPException as e:
             logger.error(f"HTTP Exception during creation: {e.detail}")
             raise e
@@ -390,18 +297,23 @@ class SessionSubjectService:
         return sessions
     
     @staticmethod
-    def _parse_availability(slots):
+    def _parse_availability(availabilities):
         availability = {}
-        for slot in slots:
-            start = datetime.fromisoformat(slot["start_at"])
-            end = datetime.fromisoformat(slot["end_at"])
-            date_key = start.strftime("%Y-%m-%d")
-            start_minutes = start.hour * 60 + start.minute
-            end_minutes = end.hour * 60 + end.minute
-            if date_key not in availability:
-                availability[date_key] = []
-            availability[date_key].append((start_minutes, end_minutes))
+        for availability_item in availabilities:
+            slots = availability_item.slots
+            for slot in slots:
+                start = datetime.fromisoformat(slot["start_at"])
+                end = datetime.fromisoformat(slot["end_at"])
+                date_key = start.strftime("%Y-%m-%d")
+                start_minutes = start.hour * 60 + start.minute
+                end_minutes = end.hour * 60 + end.minute
+                
+                if date_key not in availability:
+                    availability[date_key] = []
+                availability[date_key].append((start_minutes, end_minutes))
+        
         return availability
+    
 
     @staticmethod
     def _cast_to_combinator_struct(data):
@@ -416,9 +328,28 @@ class SessionSubjectService:
                 "teacher": {
                     "id": item.user_info.id,
                     "name": f"{item.user_info.first_name} {item.user_info.last_name}",
-                    "availability": SessionSubjectService._parse_availability(item.user_info.availabilities[0].slots)
+                    "availability": SessionSubjectService._parse_availability(item.user_info.availabilities)
                     if item.user_info.availabilities else {}
                 },
             }
             courses.append(course)
         return courses
+    
+    def _transform_calendar(calendar):
+        transformed_calendar = []
+        
+        for i, item in enumerate(calendar):
+            transformed_calendar.append({
+                "id": item.educational_courses_id,
+                "date": item.educational_course.day,
+                "type": item.day_type
+            })
+        
+        return transformed_calendar
+    
+    @staticmethod
+    def generate_timestamp(day: str, start_time: int) -> datetime:
+        day_datetime = datetime.strptime(day, "%Y-%m-%d")
+        timestamp = day_datetime + timedelta(minutes=start_time)
+        
+        return timestamp
