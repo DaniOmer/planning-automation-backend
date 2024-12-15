@@ -1,7 +1,7 @@
 fastapi[standard]
 SQLAlchemy
 alembic
-psycopg2
+psycopg2-binary
 asyncpg
 python-decouple
 loguru
@@ -9,3 +9,8 @@ greenlet
 bcrypt==4.0.1
 passlib[bcrypt]
 pyjwt
+sib-api-v3-sdk
+pandas
+ortools
+faker
+openai
