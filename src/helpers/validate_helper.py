@@ -1,3 +1,7 @@
+import csv
+from io import StringIO
+from datetime import datetime
+from typing import List, Tuple
 from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,3 +47,55 @@ class ValidationHelper:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Unexpected error validating {field_name} with ID {record_id}"
             )
+        
+    @staticmethod
+    def validate_csv_content(
+        csv_content: str,
+        required_columns: List[str],
+        date_fields: List[Tuple[str, str]]
+    ) -> Tuple[List[dict], List[str]]:
+        """
+        Validates the content of a CSV file.
+
+        :param csv_content: The CSV content as a string.
+        :param required_columns: List of required columns.
+        :param date_fields: List of tuples containing the name of the date field and the expected date format.
+        :return: A tuple containing two elements:
+            - A list of valid rows (parsed data).
+            - A list of errors encountered (messages).
+        """
+        # Convert the CSV content into a StringIO object so it can be read like a file
+        reader = csv.DictReader(StringIO(csv_content))
+        errors = []
+        valid_rows = []
+
+        # Validate required columns
+        if not set(required_columns).issubset(reader.fieldnames or []):
+            missing_columns = set(required_columns) - set(reader.fieldnames or [])
+            errors.append(f"CSV file is missing required columns: {', '.join(missing_columns)}")
+            return [], errors
+
+        # Validate each row
+        for idx, row in enumerate(reader, start=1):
+            try:
+                # Check for required fields
+                for column in required_columns:
+                    if not row.get(column, "").strip():
+                        raise ValueError(f"Missing required field '{column}' on row {idx}.")
+
+                # Validate date fields
+                for date_field, date_format in date_fields:
+                    date_value = row.get(date_field, "").strip()
+                    if date_value:
+                        try:
+                            row[date_field] = datetime.strptime(date_value, date_format).date()
+                        except ValueError:
+                            raise ValueError(f"Invalid date format on row {idx}: '{date_value}'. Expected format: {date_format}.")
+
+                valid_rows.append(row)
+
+            except Exception as e:
+                errors.append(f"Error on row {idx}: {e}")
+
+        return valid_rows, errors
+
