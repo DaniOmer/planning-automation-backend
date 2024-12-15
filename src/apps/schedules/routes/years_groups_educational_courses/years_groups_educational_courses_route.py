@@ -1,7 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+import csv
+from io import StringIO
+from datetime import datetime
+
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 
 from src.config.database_service import get_db
 from src.helpers import TransformHelper
@@ -9,8 +14,13 @@ from src.apps.schedules.model.years_groups_educational_courses.years_groups_educ
 from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_schema import YearsGroupsEducationalCoursesSchema
 from src.apps.schedules.services.years_groups_educational_courses.years_groups_educational_courses_service import YearsGroupsEducationalCoursesService
 
-router = APIRouter(prefix="/years-groups-educational-courses", tags=["YearsGroupsEducationalCourses"])
+from src.apps.schedules.model.years_groups.years_groups_model import YearsGroups
+from src.apps.schedules.services.years_groups.years_groups_service import YearsGroupService
+from src.apps.schedules.model.educational_courses.educational_courses_model import EducationalCourses
+from src.apps.schedules.model.educational_courses.educational_courses_schema import EducationalCourseCreate
+from src.apps.schedules.services.educational_courses.educational_courses_service import EducationalCourseService
 
+router = APIRouter(prefix="/years-groups-educational-courses", tags=["YearsGroupsEducationalCourses"])
 
 @router.post("/", response_class=JSONResponse)
 async def create_years_groups_educational_course(
@@ -81,3 +91,24 @@ async def delete_years_groups_educational_course(
     if not success:
         raise HTTPException(status_code=404, detail="Entry not found")
     return JSONResponse(content={"detail": "Entry successfully deleted"})
+
+
+@router.post("/upload-csv")
+async def upload_csv(
+    years_group_id: int,
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_db)
+):
+    try:
+        file_content = await file.read()
+        created_records = await YearsGroupsEducationalCoursesService.upload_csv(years_group_id, file_content, session)
+        if len(created_records):
+            await session.commit()
+            return {"details": f"{len(created_records)} records created successfully."}
+        else:
+            return {"details": "No records to create. All records from the CSV file already exist."}
+    except Exception as e:
+        raise HTTPException(
+            status_code=e.status_code,
+            detail=e.detail
+        )

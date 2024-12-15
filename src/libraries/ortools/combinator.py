@@ -124,6 +124,11 @@ class Combinator:
                                 "end_time": h + self.session_duration,
                                 "teacher": course['teacher']['name'],
                             })
-            return schedule
+            return {
+                "status": solver.StatusName(status),
+                "schedule": schedule,
+                "total_cost": solver.ObjectiveValue(),
+                "num_solutions": solver.NumSolutions() - 1,
+            }
         else:
             return {"status": solver.StatusName(status)}

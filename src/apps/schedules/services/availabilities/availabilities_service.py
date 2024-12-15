@@ -5,7 +5,6 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.apps.schedules.model.availabilities.availabilities_model import Availabilities
-from src.apps.schedules.model.availabilities.availabilities_schema import AvailabilityUpdateSchema
 
 class AvailabilityService:
     """Service for operations related to user availabilities"""

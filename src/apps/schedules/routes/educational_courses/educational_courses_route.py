@@ -1,17 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import YearsGroupsEducationalCourses
+from sqlalchemy.future import select
+
 from src.config.database_service import get_db
-from src.apps.schedules.model.educational_courses.educational_courses_model import EducationalCourses
+from src.apps.schedules.model.years_groups_educational_courses.years_groups_educational_courses_model import YearsGroupsEducationalCourses
 from src.apps.schedules.model.educational_courses.educational_courses_schema import EducationalCourseCreate, EducationalCourseResponse
 from src.apps.schedules.services.educational_courses.educational_courses_service import EducationalCourseService
 from src.apps.schedules.model.years_groups.years_groups_model import YearsGroups
 from src.helpers import TransformHelper
-from sqlalchemy.future import select
-import pandas as pd
-import io
 from src.utils.csv_utils import import_csv
-from sqlalchemy import insert
 
 router = APIRouter(prefix="/educational_courses", tags=["EducationalCourses"])
 
@@ -21,7 +19,7 @@ async def create_educational_course(
     session: AsyncSession = Depends(get_db)
 ):
     try:
-        created_course = await EducationalCourseService.create_educational_course(course_data, session)
+        created_course = await EducationalCourseService.get_or_create_educational_course(course_data, session)
         course_dict = TransformHelper.map_to_dict(created_course)
         return EducationalCourseResponse(**course_dict)
     except ValueError as e:

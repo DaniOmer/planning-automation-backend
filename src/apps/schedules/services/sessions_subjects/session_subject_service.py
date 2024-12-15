@@ -4,7 +4,8 @@ from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.inspection import inspect
 
 from src.apps.schedules.model.classes.classes_model import Classes
 from src.apps.classrooms.model.classroom_model import Classroom
@@ -75,39 +76,23 @@ class SessionSubjectService:
     async def create_session_subject(data: SessionSubjectCreate, session: AsyncSession):
         """Create a new session_subject"""
         try:
-            # assignedSubjects = None
-            # classe = await ValidationHelper.validate_id(Classes, data.classes_id, session, "Classes")
-            # if classe:
-            #     assignedSubjects = AssignmentsSubjectsService.get_assignment_course_by_id(classe.id)
-            # if assignedSubjects:
-            #     pass
-
-            # classroom = None
-            # if data.classrooms_id:
-            #     classroom = await ValidationHelper.validate_id(Classroom, data.classrooms_id, session, "Classroom")
-            # assignment = await ValidationHelper.validate_id(AssignmentSubject, data.assignments_subjects_id, session, "AssignmentSubject")
-
-            # session_subject = SessionSubject(**data.dict())
-            # session_subject.classroom_info = classroom
-            # session_subject.assignment_info = assignment
-
-            # session.add(session_subject)
-            # await session.commit()
-            # await session.refresh(session_subject)
-            # logger.info(f"SessionSubject created successfully with ID: {session_subject.id}")
-
-            # return await SessionSubjectService._load_full_session_subject(session, session_subject.id)
             query = (
-                select(SessionSubject)
+                select(AssignmentSubject)
                 .options(
-                    selectinload(SessionSubject.classroom_info),
-                    selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.class_info),
-                    selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.subject_info),
-                    selectinload(SessionSubject.assignment_info).selectinload(AssignmentSubject.user_info),
+                    joinedload(AssignmentSubject.class_info),
+                    joinedload(AssignmentSubject.subject_info),
+                    joinedload(AssignmentSubject.user_info).selectinload(User.availabilities)
                 )
+                .where(AssignmentSubject.classes_id == data.classes_id)
             )
-            result = await session.execute(query)
+            as_result = await session.execute(query)
+            assignedSubjects = as_result.scalars().all()
 
+            if not assignedSubjects:
+                raise ValueError(f"No assigned subjects found for class with ID {data.classes_id}")
+            
+            courses =  SessionSubjectService._cast_to_combinator_struct(assignedSubjects)
+        
             calendar = [
                 {"date": "2024-12-01", "type": "course"},
                 {"date": "2024-12-02", "type": "exam"},
@@ -118,113 +103,113 @@ class SessionSubjectService:
                 {"date": "2024-12-07", "type": "course"},
                 {"date": "2024-12-08", "type": "course"},
             ]
-            courses = [
-                {
-                    "id": 1,
-                    "name": "Mathématiques",
-                    "hourly_volume": 720,
-                    "start_date": "2024-01-01",
-                    "end_date": "2024-06-30",
-                    "teacher": {
-                        "name": "Prof A",
-                        "availability": {
-                            "2024-12-01": [(540, 780), (840, 1080)],
-                            "2024-12-03": [(540, 780), (840, 1080)]
-                        }
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "Physique",
-                    "hourly_volume": 1200,
-                    "start_date": "2024-01-01",
-                    "end_date": "2024-06-30",
-                    "teacher": {
-                        "name": "Prof B",
-                        "availability": {
-                            "2024-12-01": [(840, 1080)],
-                            "2024-12-03": [(540, 780), (840, 1080)],
-                            "2024-12-04": [(540, 780), (840, 1080)],
-                            "2024-12-05": [(540, 780), (840, 1080)]
-                        }
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "Chimie",
-                    "hourly_volume": 960,
-                    "start_date": "2024-01-01",
-                    "end_date": "2024-06-30",
-                    "teacher": {
-                        "name": "Prof C",
-                        "availability": {
-                            "2024-12-01": [(840, 1080)],
-                            "2024-12-03": [(540, 780), (840, 1080)],
-                            "2024-12-04": [(540, 780), (840, 1080)]
-                        }
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "Français",
-                    "hourly_volume": 1080,
-                    "start_date": "2024-01-01",
-                    "end_date": "2024-06-30",
-                    "teacher": {
-                        "name": "Prof D",
-                        "availability": {
-                            "2024-12-01": [(540, 780), (840, 1080)],
-                            "2024-12-03": [(540, 780), (840, 1080)],
-                            "2024-12-04": [(540, 780), (840, 1080)]
-                        }
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "Anglais",
-                    "hourly_volume": 1140,
-                    "start_date": "2024-01-01",
-                    "end_date": "2024-06-30",
-                    "teacher": {
-                        "name": "Prof E",
-                        "availability": {
-                            "2024-12-01": [(540, 780), (840, 1080)],
-                            "2024-12-03": [(540, 780), (840, 1080)],
-                            "2024-12-04": [(540, 780), (840, 1080)],
-                            "2024-12-05": [(540, 780), (840, 1080)],
-                            "2024-12-06": [(540, 780), (840, 1080)],
-                        }
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "Python",
-                    "hourly_volume": 720,
-                    "start_date": "2024-01-01",
-                    "end_date": "2024-06-30",
-                    "teacher": {
-                        "name": "Prof F",
-                        "availability": {
-                            "2024-12-01": [(540, 780), (840, 1080)],
-                            "2024-12-03": [(540, 780), (840, 1080)]
-                        }
-                    }
-                },
-                {
-                    "id": 7,
-                    "name": "Js",
-                    "hourly_volume": 720,
-                    "start_date": "2024-01-01",
-                    "end_date": "2024-06-30",
-                    "teacher": {
-                        "name": "Prof G",
-                        "availability": {
-                            "2024-12-01": [(540, 780), (840, 1080)],
-                            "2024-12-03": [(540, 780), (840, 1080)]
-                        }
-                    }
-                },
-            ]
+            # courses = [
+            #     {
+            #         "id": 1,
+            #         "name": "Mathématiques",
+            #         "hourly_volume": 720,
+            #         "start_date": "2024-01-01",
+            #         "end_date": "2024-06-30",
+            #         "teacher": {
+            #             "name": "Prof A",
+            #             "availability": {
+            #                 "2024-12-01": [(540, 780), (840, 1080)],
+            #                 "2024-12-03": [(540, 780), (840, 1080)]
+            #             }
+            #         }
+            #     },
+            #     {
+            #         "id": 2,
+            #         "name": "Physique",
+            #         "hourly_volume": 1200,
+            #         "start_date": "2024-01-01",
+            #         "end_date": "2024-06-30",
+            #         "teacher": {
+            #             "name": "Prof B",
+            #             "availability": {
+            #                 "2024-12-01": [(840, 1080)],
+            #                 "2024-12-03": [(540, 780), (840, 1080)],
+            #                 "2024-12-04": [(540, 780), (840, 1080)],
+            #                 "2024-12-05": [(540, 780), (840, 1080)]
+            #             }
+            #         }
+            #     },
+            #     {
+            #         "id": 3,
+            #         "name": "Chimie",
+            #         "hourly_volume": 960,
+            #         "start_date": "2024-01-01",
+            #         "end_date": "2024-06-30",
+            #         "teacher": {
+            #             "name": "Prof C",
+            #             "availability": {
+            #                 "2024-12-01": [(840, 1080)],
+            #                 "2024-12-03": [(540, 780), (840, 1080)],
+            #                 "2024-12-04": [(540, 780), (840, 1080)]
+            #             }
+            #         }
+            #     },
+            #     {
+            #         "id": 4,
+            #         "name": "Français",
+            #         "hourly_volume": 1080,
+            #         "start_date": "2024-01-01",
+            #         "end_date": "2024-06-30",
+            #         "teacher": {
+            #             "name": "Prof D",
+            #             "availability": {
+            #                 "2024-12-01": [(540, 780), (840, 1080)],
+            #                 "2024-12-03": [(540, 780), (840, 1080)],
+            #                 "2024-12-04": [(540, 780), (840, 1080)]
+            #             }
+            #         }
+            #     },
+            #     {
+            #         "id": 5,
+            #         "name": "Anglais",
+            #         "hourly_volume": 1140,
+            #         "start_date": "2024-01-01",
+            #         "end_date": "2024-06-30",
+            #         "teacher": {
+            #             "name": "Prof E",
+            #             "availability": {
+            #                 "2024-12-01": [(540, 780), (840, 1080)],
+            #                 "2024-12-03": [(540, 780), (840, 1080)],
+            #                 "2024-12-04": [(540, 780), (840, 1080)],
+            #                 "2024-12-05": [(540, 780), (840, 1080)],
+            #                 "2024-12-06": [(540, 780), (840, 1080)],
+            #             }
+            #         }
+            #     },
+            #     {
+            #         "id": 6,
+            #         "name": "Python",
+            #         "hourly_volume": 720,
+            #         "start_date": "2024-01-01",
+            #         "end_date": "2024-06-30",
+            #         "teacher": {
+            #             "name": "Prof F",
+            #             "availability": {
+            #                 "2024-12-01": [(540, 780), (840, 1080)],
+            #                 "2024-12-03": [(540, 780), (840, 1080)]
+            #             }
+            #         }
+            #     },
+            #     {
+            #         "id": 7,
+            #         "name": "Js",
+            #         "hourly_volume": 720,
+            #         "start_date": "2024-01-01",
+            #         "end_date": "2024-06-30",
+            #         "teacher": {
+            #             "name": "Prof G",
+            #             "availability": {
+            #                 "2024-12-01": [(540, 780), (840, 1080)],
+            #                 "2024-12-03": [(540, 780), (840, 1080)]
+            #             }
+            #         }
+            #     },
+            # ]
             session_duration = 240
             days_time_slot = (480, 1200)
             nb_rooms= 5
@@ -233,6 +218,7 @@ class SessionSubjectService:
             combinator = Combinator(calendar, courses, session_duration, days_time_slot, nb_rooms)
             planned_sessions = combinator.solve()
             return planned_sessions
+            
 
         except HTTPException as e:
             logger.error(f"HTTP Exception during creation: {e.detail}")
@@ -402,3 +388,37 @@ class SessionSubjectService:
         sessions = result.scalars().all()
         logger.info(f"Fetched {len(sessions)} SessionSubjects for subject ID: {subject_id}")
         return sessions
+    
+    @staticmethod
+    def _parse_availability(slots):
+        availability = {}
+        for slot in slots:
+            start = datetime.fromisoformat(slot["start_at"])
+            end = datetime.fromisoformat(slot["end_at"])
+            date_key = start.strftime("%Y-%m-%d")
+            start_minutes = start.hour * 60 + start.minute
+            end_minutes = end.hour * 60 + end.minute
+            if date_key not in availability:
+                availability[date_key] = []
+            availability[date_key].append((start_minutes, end_minutes))
+        return availability
+
+    @staticmethod
+    def _cast_to_combinator_struct(data):
+        courses = []
+        for item in data:
+            course = {
+                "id": item.id,
+                "name": item.subject_info.name,
+                "hourly_volume": item.subject_info.hourly_volume,
+                "start_date": item.subject_info.start_at,
+                "end_date": item.subject_info.end_at,
+                "teacher": {
+                    "id": item.user_info.id,
+                    "name": f"{item.user_info.first_name} {item.user_info.last_name}",
+                    "availability": SessionSubjectService._parse_availability(item.user_info.availabilities[0].slots)
+                    if item.user_info.availabilities else {}
+                },
+            }
+            courses.append(course)
+        return courses
