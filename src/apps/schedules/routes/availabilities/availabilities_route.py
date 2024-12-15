@@ -1,8 +1,5 @@
-import io
-from datetime import datetime
-
 import pandas as pd
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.database_service import get_db
@@ -28,12 +25,6 @@ async def read_availability_by_users_id(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/", response_model=AvailabilityResponse)
-async def create_new_availability(
-    availability: AvailabilityCreate, 
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(SecurityHelper.get_current_user)
-):
 @router.post("/", response_model=AvailabilityResponseSchema)
 async def create_new_availability(
     availability: AvailabilityCreateSchema,

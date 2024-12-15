@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from fastapi import HTTPException, status
 from loguru import logger
@@ -114,7 +114,7 @@ class SessionSubjectService:
                 start_at = SessionSubjectService.generate_timestamp(session_data['day'], session_data['start_time'])
                 end_at = SessionSubjectService.generate_timestamp(session_data['day'], session_data['end_time'])
                 session_subject = SessionSubject(
-                    assignments_subjects_id=session_data['course_id'],
+                    assignments_subjects_id=int(session_data.get('course_id')),
                     start_at=start_at,
                     end_at=end_at,
                     status=SessionStatus.pending,
@@ -348,8 +348,13 @@ class SessionSubjectService:
         return transformed_calendar
     
     @staticmethod
-    def generate_timestamp(day: str, start_time: int) -> datetime:
-        day_datetime = datetime.strptime(day, "%Y-%m-%d")
+    def generate_timestamp(day: date | str, start_time: int) -> datetime:
+        if isinstance(day, date):
+            day_datetime = datetime.combine(day, datetime.min.time())
+        elif isinstance(day, str):
+            day_datetime = datetime.strptime(day, "%Y-%m-%d")
+        else:
+            raise ValueError("Le paramètre 'day' doit être de type datetime.date ou une chaîne au format 'YYYY-MM-DD'.")
         timestamp = day_datetime + timedelta(minutes=start_time)
         
         return timestamp
